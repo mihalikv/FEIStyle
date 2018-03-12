@@ -1,3 +1,26 @@
+\section{Medusa}
+Medusa je bezpečnostný systém pre jadro Linux-u.
+
+\section{IPC}
+\acrfull{ipc} predstavuje súbor mechanizmov určených na komunikáciu a správu dát medzi viacerými procesmi. Operačný systém Linux obsahuje niekoľko takýchto mechanizmov, medzi najhlavnejšie patria:
+\begin{itemize}
+\item Signály
+\item Rúry
+\item Fronty správ
+\item Semafory
+\item Zdieľaná pamäť
+\item Sokety
+\end{itemize}
+V nasledujúcich odsekoch si bližšie popíšeme tieto mechanizmy. Avšak niektoré z týchto mechanizmov boli v systéme Medusa už implementované, konkrétne \textbf{signály} a \textbf{rúry}. Týmto mechanizmom sa preto budeme venovať stručnejšie.
+\subsection{Signály}
+Ide o jeden z najstarších \acrshort{ipc} mechanizmov používaný v Unix systémoch. Signál je asynchrónne upozornenie zaslané procesu alebo konkrétnemu vláknu v rámci toho istého procesu, za účelom upozornenia na udalosť, ktorá sa vyskytla. V momente keď sa signál odošle, operačný systém preruší vykonávanie procesu, ktorý má byť signalizovaný a v tomto procese sa vykoná obslúženie signálu. V prípade že je definovaná obslužná funkcia, táto funkcia sa vykoná, v opačnom prípade je použitá štandardná obsluha signálu. 
+Je potrebné si uvedomiť že \textbf{signály nie sú} to isté ako \textbf{prerušenia}. Rozdiel medzi signálom a prerušením je, že prerušenie je vyvolané procesorom a signál je vyvolaný z jadra systému.
+Signál je možné vyvolať systémovým volaním \textbf{kill}. Toto systémové volanie má parameter, ktorý určuje o aký typ signálu ide. Podporované typy je možné zistiť pomocou príkazu \textit{kill -l} alebo v súbore \textit{/include/linux/signal.h}.
+\subsection{Rúry}
+\subsection{Fronty správ}
+\subsection{Semafory}
+\subsection{Zdieľaná pamäť}
+\subsection{Sokety}
 \section{Úkážka glossaries}
 \noindent Verzia FEIstyle 1.5 používa glossary\footnote{\url{https://www.ctan.org/pkg/glossaries?lang=en}} balík.
 \acrfull{cdma} je dlhá skratka naopak \acrshort{gsm} je skratka v krátkej forme.
