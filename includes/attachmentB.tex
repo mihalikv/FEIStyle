@@ -1,25 +1,89 @@
-\begin{algorithm}
-\caption{Vypočítaj $y = x^n$}  
-\label{alg:calculation-1}                         
-\begin{algorithmic}                    
-    \REQUIRE $n \geq 0 \vee x \neq 0$
-    \ENSURE $y = x^n$
-    \STATE $y \Leftarrow 1$
-    \IF{$n < 0$}
-        \STATE $X \Leftarrow 1 / x$
-        \STATE $N \Leftarrow -n$
-    \ELSE
-        \STATE $X \Leftarrow x$
-        \STATE $N \Leftarrow n$
-    \ENDIF
-    \WHILE{$N \neq 0$}
-        \IF{$N$ is even}
-            \STATE $X \Leftarrow X \times X$
-            \STATE $N \Leftarrow N / 2$
-        \ELSE[$N$ is odd]
-            \STATE $y \Leftarrow y \times X$
-            \STATE $N \Leftarrow N - 1$
-        \ENDIF
-    \ENDWHILE
-\end{algorithmic}
-\end{algorithm}
+\begin{lstlisting}[
+  caption={Štruktúra kern\_ipc\_perm},
+  label={lst:kernipcperm},
+  language=c
+]
+struct kern_ipc_perm {
+	spinlock_t	lock;
+	bool		deleted;
+	int		id;
+	key_t		key;
+	kuid_t		uid;
+	kgid_t		gid;
+	kuid_t		cuid;
+	kgid_t		cgid;
+	umode_t		mode;
+	unsigned long	seq;
+	void		*security;
+	struct rhash_head khtnode;
+	struct rcu_head rcu;
+	refcount_t refcount;
+} ____cacheline_aligned_in_smp __randomize_layout;
+\end{lstlisting}
+\begin{lstlisting}[
+  caption={Štruktúra msqid64\_ds},
+  label={lst:msqid64},
+  language=c
+]
+struct msqid64_ds {
+	struct ipc64_perm msg_perm;
+	__kernel_time_t msg_stime;	/* last msgsnd time */
+#if __BITS_PER_LONG != 64
+	unsigned long	__unused1;
+#endif
+	__kernel_time_t msg_rtime;	/* last msgrcv time */
+#if __BITS_PER_LONG != 64
+	unsigned long	__unused2;
+#endif
+	__kernel_time_t msg_ctime;	/* last change time */
+#if __BITS_PER_LONG != 64
+	unsigned long	__unused3;
+#endif
+	__kernel_ulong_t msg_cbytes;	/* current number of bytes on queue */
+	__kernel_ulong_t msg_qnum;	/* number of messages in queue */
+	__kernel_ulong_t msg_qbytes;	/* max number of bytes on queue */
+	__kernel_pid_t msg_lspid;	/* pid of last msgsnd */
+	__kernel_pid_t msg_lrpid;	/* last receive pid */
+	__kernel_ulong_t __unused4;
+	__kernel_ulong_t __unused5;
+};
+\end{lstlisting}
+\begin{lstlisting}[
+  caption={Štruktúra msqid\_ds},
+  label={lst:msqid},
+  language=c
+]
+struct msqid_ds {
+	struct ipc_perm msg_perm;
+	struct msg *msg_first;		/* first message on queue,unused  */
+	struct msg *msg_last;		/* last message in queue,unused */
+	__kernel_time_t msg_stime;	/* last msgsnd time */
+	__kernel_time_t msg_rtime;	/* last msgrcv time */
+	__kernel_time_t msg_ctime;	/* last change time */
+	unsigned long  msg_lcbytes;	/* Reuse junk fields for 32 bit */
+	unsigned long  msg_lqbytes;	/* ditto */
+	unsigned short msg_cbytes;	/* current number of bytes on queue */
+	unsigned short msg_qnum;	/* number of messages in queue */
+	unsigned short msg_qbytes;	/* max number of bytes on queue */
+	__kernel_ipc_pid_t msg_lspid;	/* pid of last msgsnd */
+	__kernel_ipc_pid_t msg_lrpid;	/* last receive pid */
+};
+\end{lstlisting}
+\begin{lstlisting}[
+  caption={Štruktúra msginfo},
+  label={lst:msginfo},
+  language=c
+]
+struct msginfo {
+	int msgpool;
+	int msgmap; 
+	int msgmax; 
+	int msgmnb; 
+	int msgmni; 
+	int msgssz; 
+	int msgtql; 
+	unsigned short  msgseg; 
+};
+\end{lstlisting}
+
+

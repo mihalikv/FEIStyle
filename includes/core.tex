@@ -123,7 +123,7 @@ struct msg_msgseg {
 \end{lstlisting}
 
 \subsubsection{msg\_queue}
-Poslednou štruktúrou, ktorá sa nachádza najvyššie v hierarchií týchto štruktúr je \texttt{\textbf{msq\_queue}}\footnote{V staršej dokumentácii sa taktiež môžeme stretnúť so štruktúrou \texttt{msqid\_ds}, avšak ide o zastaralú štruktúru a momentálne sa v jadre nachádza len z dôvodu spätnej kompatibility} a jej deklaráciu môžete vidieť na ukážke kódu \ref{lst:msgmsgseg}. Najdôležitejšou položkou tejto štruktúry je položka\texttt{q\_messages}, ktorá predstavuje prvý element zreťazeného zoznamu všetkých správ vo fronte. Ďalšie zreťazené zoznamy, ktoré sa tu nachádzajú sú \texttt{q\_receivers} a \texttt{q\_senders}, ktoré obsahujú zreťazené zoznamy procesov, ktoré posielajú správy a procesov, ktoré prijímajú správy. Zaujímavou položkou z pohľadu bezpečnosti je položka \texttt{q\_perm}, ktorá obsahuje inštanciu štruktúry \texttt{\textbf{kern\_ipc\_perm}}. Túto štruktúru si popíšeme v kapitole \ref{kernipcperm}.
+Poslednou štruktúrou, ktorá sa nachádza najvyššie v hierarchií týchto štruktúr je \texttt{\textbf{msq\_queue}} a jej deklaráciu môžete vidieť na ukážke kódu \ref{lst:msgmsgseg}. Najdôležitejšou položkou tejto štruktúry je položka\texttt{q\_messages}, ktorá predstavuje prvý element zreťazeného zoznamu všetkých správ vo fronte. Ďalšie zreťazené zoznamy, ktoré sa tu nachádzajú sú \texttt{q\_receivers} a \texttt{q\_senders}, ktoré obsahujú zreťazené zoznamy procesov, ktoré posielajú správy a procesov, ktoré prijímajú správy. Zaujímavou položkou z pohľadu bezpečnosti je položka \texttt{q\_perm}, ktorá obsahuje inštanciu štruktúry \texttt{\textbf{kern\_ipc\_perm}}. Túto štruktúru si popíšeme v kapitole \ref{kernipcperm}.
 \begin{lstlisting}[
   caption={Štruktúra msq\_queue},
   label={lst:msgmsgseg},
@@ -155,29 +155,7 @@ struct msg_queue {
 \item rcu - \acrshort{rcu} synchronizačný mechanizmus
 \item refcount - počítadlo použití \acrshort{ipc} objektu
 \end{itemize}
-\begin{lstlisting}[
-  caption={Štruktúra kern\_ipc\_perm},
-  label={lst:kernipcperm},
-  language=c
-]
-struct kern_ipc_perm {
-	spinlock_t	lock;
-	bool		deleted;
-	int		id;
-	key_t		key;
-	kuid_t		uid;
-	kgid_t		gid;
-	kuid_t		cuid;
-	kgid_t		cgid;
-	umode_t		mode;
-	unsigned long	seq;
-	void		*security;
-	struct rhash_head khtnode;
-	struct rcu_head rcu;
-	refcount_t refcount;
-} ____cacheline_aligned_in_smp __randomize_layout;
-\end{lstlisting}
-\subsubsection{Požívanie fronty správ}
+\subsubsection{Požívanie fronty správ} \label{msguse}
 Na vytvorenie fronty správ sa používa systémové volanie \texttt{msgget}. Toto systémové volanie má dva parametre, ktorými sú \texttt{key}(identifikátor objektu) a \texttt{msgflg} príznaky \acrshort{ipc} objektu. Nová fronta je vytvorená v prípadoch, že:
 \begin{itemize}
 \item \texttt{key} sa rovná \texttt{IPC\_PRIVATE}
@@ -198,13 +176,26 @@ Funkcia \texttt{msgrcv}, odstráni správu z frontu a premiestni do pamäte, na 
 \item \texttt{msgflg} príznaky, ktoré definujú čo sa má diať v prípade, že je fronta prázdna
 \item \texttt{msgtyp} číslo, ktoré definuje ktorý typ správy bude ako prvý vybraný z fronty(nemôže byt definovaný príznak \texttt{MSG\_COPY}), v prípade že je definovaný príznak \texttt{MSG\_EXCEPT}, tak sa z fronty vyberá prvá správa z typom odlišným od \texttt{msgtyp}
 \end{itemize}
+Posledným systémovým volaním tohto mechanizmu je \texttt{msgctl}, ktoré vykonáva kontrolné operácie nad objektom. Funkcia má 3 parametre:
+\begin{itemize}
+\item \texttt{msgid} identifikátor objektu
+\item \texttt{cmd} typ operácie
+\item \texttt{buf} ide o štruktúru, ktorá sa v jadre ako aj v manuálových stránkach nachádza v 32 bitovej verzií(viď \ref{msqid}), avšak v jadre sa označuje za zastaralú pričom ju nahrádza 64 bitová verzia(viď \ref{msqid64}), táto štruktúra slúži na prenos meta dát z jadra systému do užívateľského priestoru
+\end{itemize}
+Typy operácie nad frontami správ sú nasledovné:
+\begin{itemize}
+\item \texttt{IPC\_STAT} a \texttt{MSG\_STAT} kopíruje informácie z jadra do štruktúry na ktorú ukazuje ukazovateľ \texttt{buf}
+\item \texttt{IPC\_SET} nastavuje položky jadra na základe ukazovateľa \texttt{buf}, konkrétne \texttt{msg\_perm.uid}, \texttt{msg\_perm.gid}, \texttt{msg\_qbytes} a posledných 9 bitov \texttt{msg\_perm.mode}
+\item \texttt{IPC\_RMID} odstraňuje frontu správ
+\item \texttt{IPC\_INFO} a \texttt{MSG\_INFO} získava limity a systémové nastavenia pre fronty správ, dáta sa nachádzajú na adrese ukazovateľa \texttt{buf}, avšak dáta sú v štruktúre typu \texttt{msginfo}(viď \ref{msginfo}) a preto je potrebné pre-typovanie\footnote{\texttt{IPC\_INFO} a \texttt{MSG\_INFO} ako aj \texttt{IPC\_STAT} a \texttt{MSG\_STAT} vracajú mierne odlišné dáta a sú platformovo závislé pre viac info pozri \url{http://man7.org/linux/man-pages/man2/msgctl.2.html}}
+\end{itemize}
 \subsection{Semafory}
 Semafor ako \acrshort{ipc} mechanizmus nepredstavuje nástoj na prenášanie dát ale slúži ako synchronizačný mechanizmus na ochranu zdieľaných zdrojov pri viac procesovom alebo viac vláknovom vykonávaný programu. Všeobecný semafor si môžme predstaviť ako počítadlo, ktoré je možné atomický upravovať. Semafor zvyčajne implementuje dve základné funkcie, ktoré slúžia na zvýšenie(\texttt{signal}) a zníženie(\texttt{wait}) tohto počítadla. Napríklad ak proces 1 chce vstúpiť do chránenej oblasti(pristúpiť k zdieľaným zdrojom) zníži počítadlo semaforu. Proces 2, ktorý taktiež bude chcieť pristúpiť k týmto zdrojom zníži semafor čo má za následok bloknutie procesu 2, ktorý musí počkať na zvýšenie počítadlo. Proces 1 v prípade že bude opúšťať kritickú oblasť zvýši počítadlo semaforu čo zabezpečí odblokovanie procesu 1.
 
 Semafor \textit{System V} semafory na rozdiel od \acrshort{posix} semaforov nepredstavujú len jedno počítadlo ale skupiny počítadiel. Každé jedno počítadlo môže chrániť nejakú kritickú oblasť a teda jeden \textit{System V} semafor môže chrániť viacero kritických oblastí. Veľkou výhodou je taktiež schopnosť navrátiť operácie vykonané na semafore v prípade, že proces, ktorý bol v kritickej oblasti neočakávane skončí a zabezpečiť tak aby čakajúci proces mohol vstúpiť do kritickej oblasti. 
 
 V nasledujúcich odsekoch si popíšeme interné štruktúry v jadre Linuxu, ktoré zabezpečujú fungovanie semaforov a taktiež aj použitie tohto \acrshort{ipc} mechanizmu.
-\subsubsection{Štruktúra \texttt{sem}}
+\subsubsection{Štruktúry \textit{System V} semaforov}
 Základná štruktúra, ktorá v sebe nesie hodnotu jedného počítadla má nasledovné položky:
 \begin{itemize}
 \item \texttt{semval} hodnota počítadla
@@ -224,9 +215,39 @@ Nadradenou štruktúrou, ktorá predstavuje skupiny počítadiel je \texttt{sem\
 \item \texttt{use\_global\_lock} globálny uzamykací mechanizmus nad celou skupinou semaforov
 \item \texttt{\textbf{sems}} pole jednotlivých semaforov/počítadiel
 \end{itemize}
-Operácie, ktoré sa nad týmito semaformi vykonávajú sú uložené v štruktúre \texttt{sem\_queue}. Ide o zreťazený zoznam a každá jedna inštancia tejto štruktúry predstavuje operácie jedného procesu, ktorý je blokovaný(spí) na semafore.
-
-
+Operácie, ktoré sa nad týmito semaformi vykonávajú sú uložené v štruktúre \texttt{sem\_queue}. Ide o zreťazený zoznam a každá jedna inštancia tejto štruktúry predstavuje operácie jedného procesu, ktorý je blokovaný(spí) na semafore. Táto štruktúra vyzerá nasledovne:
+\begin{itemize}
+\item \texttt{list} ďalšie položky zreťazeného zoznamu
+\item \texttt{sleeper} štruktúra typu \texttt{task\_struct}, teda proces, ktorý spí
+\item \texttt{undo} spätné operácie
+\item \texttt{sops} pole štruktúr typu \texttt{sembuf}, ktoré definuje nevykonané operácie
+\item \texttt{blocking} pole štruktúr typu \texttt{sembuf}, ktoré definuje operácie ktoré sú blokovacie
+\item \texttt{nsops} počet operácií
+\item \texttt{alter} príznak, ktorý označuje či operácia modifikuje pole semaforov
+\item \texttt{dupsop} TODO príznak, ktorý označuje či operácia modifikuje pole semaforov
+\end{itemize}
+Štruktúry na prácu s operáciami, ktoré majú byť v prípade ukončenia programu obnovené do pôvodného stavu sú štruktúry \texttt{sem\_undo} a \texttt{sem\_undo\_list}. Každý proces má jednu prislúchajúcu štruktúru \texttt{sem\_undo} a v prípade že je proces ukončený tak sa tieto operácie vykonajú. Štruktúra \texttt{sem\_undo\_list} zabezpečuje zdieľaný prístup k \texttt{sem\_undo} štruktúram v prípade že viacero procesov zdieľa jeden list čo je možné zabezpečiť pomocou príznaku \texttt{CLONE\_SYSVSEM} pri vytváraní nového procesu.
+\subsubsection{Použitie semaforov} \label{smaforuse}
+\textit{System V} semafor sa vytvára pomocou systémového volania \texttt{semget}, ktoré je analogické k funkcii \texttt{msgget}, ktorú sme si popísali v kapitole \ref{msguse}. JEdiným rozdielom je parameter \textbf{\texttt{nsems}}, ktorý definuje koľko jednotlivých semaforov chceme vytvoriť.
+Takto vytvorený semafor je možné používať a vykonávať nad ním operácie pomocou systémového volania \texttt{semop}, ktoré má nasledovné parametre:
+\begin{itemize}
+\item \texttt{semid} identiifkátor semaforu
+\item \texttt{sops} operácie nad semaforom
+\item \texttt{nsops} počet operácii v poli
+\end{itemize}
+Jednotlivé operácie sú definované pomocou štruktúry \texttt{sembuf}, ktorá má nasledujúce položky:
+\begin{itemize}
+\item \texttt{sem\_num} číslo semaforu nad ktorým chcem operáciu vykonať
+\item \texttt{sem\_op} typ operácie
+\item \texttt{sem\_flg} príznaky operácie
+\end{itemize}
+\texttt{sem\_flg} môže nadobúdať dve hodnoty, ktoré sú \texttt{SEM\_UNDO} a \texttt{IPC\_NOWAIT}. \texttt{SEM\_UNDO} indikuje že chceme aby daná operácia bola obnoviteľná. Príznak \texttt{IPC\_NOWAIT} priamo súvisí s parametrom \texttt{sem\_op}, ktorý môže nadobudnúť tieto stavy:
+\begin{itemize}
+\item \texttt{sem\_op} > 0 hodnota \texttt{sem\_op} sa pričíta k hodnota počítadla(vyžaduje sa právo na zápis)
+\item \texttt{sem\_op} == 0 a \texttt{semval} == 0 tak operácia okamžite prebehne, inak ak je definovaný príznak \texttt{IPC\_NOWAIT} operácie skončí s chybou ak však tento príznak nieje definovaný proces čaká pokiaľ bude semafor 0(vyžaduje práva na čítanie semaforu)
+\item \texttt{sem\_op} < 0 a zároveň \texttt{semval} >= \texttt{sem\_op} tak je operácia vykonaná okamžite, inak analogicky k predošlému prípadu operácia skončí buď s chybou alebo proces čaká pokiaľ bude zvýšená hodnota počítadla(vyžaduje sa právo na zápis)
+\end{itemize}
+Poseldným systé
 \subsection{Zdieľaná pamäť}
 \subsection{Sokety}
 
