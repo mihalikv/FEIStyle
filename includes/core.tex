@@ -1,6 +1,3 @@
-\section{Medusa}
-Medusa je bezpečnostný systém pre jadro Linux-u.
-
 \section{IPC}
 \acrfull{ipc} predstavuje súbor mechanizmov určených na komunikáciu a správu dát medzi viacerými procesmi. Operačný systém Linux obsahuje niekoľko takýchto mechanizmov, medzi najhlavnejšie patria:
 \begin{itemize}
@@ -11,16 +8,203 @@ Medusa je bezpečnostný systém pre jadro Linux-u.
 \item Zdieľaná pamäť
 \item Sokety
 \end{itemize}
-V nasledujúcich odsekoch si bližšie popíšeme tieto mechanizmy. Avšak niektoré z týchto mechanizmov boli v systéme Medusa už implementované, konkrétne \textbf{signály} a \textbf{rúry}. Týmto mechanizmom sa preto budeme venovať stručnejšie.
+V nasledujúcich odsekoch si bližšie popíšeme tieto mechanizmy.
 \subsection{Signály}
-Ide o jeden z najstarších \acrshort{ipc} mechanizmov používaný v Unix systémoch. Signál je asynchrónne upozornenie zaslané procesu alebo konkrétnemu vláknu v rámci toho istého procesu, za účelom upozornenia na udalosť, ktorá sa vyskytla. V momente keď sa signál odošle, operačný systém preruší vykonávanie procesu, ktorý má byť signalizovaný a v tomto procese sa vykoná obslúženie signálu. V prípade že je definovaná obslužná funkcia, táto funkcia sa vykoná, v opačnom prípade je použitá štandardná obsluha signálu. 
+Ide o jeden z najstarších \acrshort{ipc} mechanizmov používaný v Unix systémoch. Signál je asynchrónne upozornenie zaslané procesu alebo konkrétnemu vláknu v rámci toho istého procesu, za účelom upozornenia na udalosť, ktorá sa vyskytla. V momente keď sa signál odošle, operačný systém preruší vykonávanie procesu, ktorý má byť signalizovaný a v tomto procese sa vykoná obslúženie signálu.
+
 Je potrebné si uvedomiť že \textbf{signály nie sú} to isté ako \textbf{prerušenia}. Rozdiel medzi signálom a prerušením je, že prerušenie je vyvolané procesorom a signál je vyvolaný z jadra systému.
-Signál je možné vyvolať systémovým volaním \textbf{kill}. Toto systémové volanie má parameter, ktorý určuje o aký typ signálu ide. Podporované typy je možné zistiť pomocou príkazu \textit{kill -l} alebo v súbore \textit{/include/linux/signal.h}.
+Signál je možné vyvolať systémovým volaním \textbf{kill}. Toto systémové volanie má dva parametre:
+\begin{itemize}
+\item \textit{pid} - identifikátor procesu, ktorý má byť signalizovaný
+\item \textit{sig} - typ signálu
+\end{itemize}
+Podporované typy je možné zistiť pomocou príkazu \textit{kill -l} alebo v súbore \textit{/include/linux/signal.h}.
+
+V prípade že je definovaná obslužná funkcia, táto funkcia sa vykoná, v opačnom prípade je použitá štandardná obsluha signálu. Obslužnú funkciu je možné definovať pomocou funkcie \textbf{signal}, avšak správanie tejto funkcie môže byť rozdielne vzhľadom na platformu. Preto sa odporúča používať funkciu \textbf{sigaction}, ktorá bola definovaná v štandarde \textbf{POSIX.1}. Toto systémové volanie má parametere:
+\begin{itemize}
+\item \textit{signum} - typ signálu, ktorý chceme obslúžiť
+\item \textit{act} - definuje akciu, ktorá sa má vykonať pri obsluhe signálu
+\item \textit{oldact} - definuje starú obsluhu signálu
+\end{itemize}
+
+\textbf{Signály} je možné použiť pre komunikáciu ako aj synchronizáciu avšak ide o veľmi slabý nástroj pre tieto potreby.\footnote{\url{http://man7.org/conf/lca2013/IPC_Overview-LCA-2013-printable.pdf}}
 \subsection{Rúry}
+Rúry predstavujú jednosmerný tok dát medzi procesmi: všetky dáta zapísané procesom do rúry sú jadrom   presmerované do iného procesu, ktorý z nej môže čítať. Poznáme 2 druhy rúr:
+\begin{itemize}
+\item Anonymné rúry - žiadny objekt v súborovom strome
+\item Pomenované rúry - objekt v súborovom strome
+\end{itemize}
+\subsubsection{Anonymné rúry}
+\textbf{Anonymné rúry} je možné vytvoriť pomocou systémového volania \textbf{pipe}, alebo taktiež pomocou znaku \textbf{|} vo väčšine \textit{Unix} príkazových riadkoch.Systémové volanie \textbf{pipe} obsahuje jeden parameter, ktorým je pole \textit{pipefd} o veľkosti 2. Toto pole obsahuje po návrate z funkcie súborové deskriptory. Tieto dva súborové deskriptory predstavujú konce rúry, \textit{pipefd[0]} je čítací koniec rúry a \textit{pipefd[1]} je zapisovací koniec rúry. Tieto súborové deskriptory je následne možné použiť na zapisovanie a čítanie pomocou systémových volaní \textit{write}\footnote{\url{http://man7.org/linux/man-pages/man2/write.2.html}} a \textit{read}\footnote{\url{http://man7.org/linux/man-pages/man2/read.2.html}}. Tieto operácie sú blokujúce v dvoch prípadoch:
+\begin{itemize}
+\item write - rúra je plná
+\item read - rúra je prázdna
+\end{itemize}
+Niektoré \textit{Unix} systémy ako napríklad \textit{System V Release 4}, implementuje \textbf{full-duplex} rúry, teda rúry, pri ktorých oba konce rúry(súborové deskriptory) je možné použiť ako na zapisovanie tak aj na čítanie. Avšak štandard \textbf{\acrshort{posix}} definuje iba \textbf{half-duplex} rúry, pričom každý proces musí zatvoriť jeden deskriptor pred použitím druhého.
+
+Takto vytvorená rúra umožňuje komunikáciu medzi rodičovským procesom a jeho potomkami. Avšak je potrebné zabezpečiť aby procesy, ktoré medzi sebou chcú komunikovať zdieľali rovnaké súborové deskriptory. Toto je možné jednoducho dosiahnuť tak, že sa rúra vytvorí pred vytvorením detského procesu(\textit{fork}). Zjednodušený pseudokód môžeme vidieť tu \ref{lst:pipe-c} spolu s ilustračný obrázkom \ref{pipeflow}.
+\begin{lstlisting}[
+  caption={Použite anonymných rúr},
+  label={lst:pipe-c},
+  language=c
+]
+int filedes[2];
+
+pipe(filedes);
+
+child_pid = fork();
+if (child_pid == 0) {
+	close(filedes[1]);
+} else {
+	close(filedes[1]);
+}
+\end{lstlisting}
+\begin{figure}[!htbp]
+  \centering
+  \includegraphics[width=5cm]{img/rura.png}
+  \caption{Tok dát medzi procesmi.}
+  \label{pipeflow}
+\end{figure}
+
+Nevýhodou tohto systémového volania je absencia v súborovom strome a teda nie je možné využiť tento \acrshort{ipc} mechanizmus na komunikáciu medzi ľubovoľnými dvoma alebo viacerými procesmi.
+\subsubsection{Pomenované rúry}
+Pomenované rúry taktiež nazývané aj \textbf{\acrshort{fifo}} na rozdiel od anonymných rúr máju meno v súborovom systéme. Jednou z možností ako vytvoriť tento typ rúry je pomocou funkcie \textbf{mkfifo}, ktorá je definovaná v štandarde \acrshort{posix}. Táto funkcia v svojej implementácií volá systémové volanie \textit{mknod} s príznakom, ktorý definuje že ide o pomenovanú rúru. Funkcia \textbf{mkfifo} má 2 parametre:
+\begin{itemize}
+\item \textit{pathname} - názov rúry
+\item \textit{mode} - práva súboru 
+\end{itemize}
+Návratová hodnota funkcie je 0 v prípade úspechu a v prípade chyby je návratová hodnota -1. Takto vytvorenú rúru je možné rovnako ako anonymné rúry obsluhovať pomocou systémových volaní \textit{read} a \textit{write}.
+
 \subsection{Fronty správ}
+Fronty správ si najlepšie môžme predstaviť ako zreťazený zoznam v adresnom priestore jadra. Správy môžu byť odosielané do fronty v poradí a následne načítané z fronty pomocou niekoľko rôznych spôsobov. Každá fronta správ je jednoznačne identifikovaná pomocou \acrshort{ipc} identifikátora. Pre lepšie pochopenie tohto konceptu si popíšeme 3 hlavné štruktúry, ktoré zabezpečujú fungovanie fronty správ v jadre Linuxu.
+\subsubsection{msgbuf} \label{msgbuf}
+Táto štruktúra (definovaná v \url{linux/msg.h}) predstavuje predlohu ako by mala vyzerať správa, ktorú budeme posielať. Táto predloha obsahuje dve položky: 
+\begin{itemize}
+\item long \textbf{mtype} - umožňuje určiť o aký typ správy ide, napríklad \textit{chybová správa}, \textit{normálna správa} a podobne, možností je nekonečno
+\item char \textbf{mtext}[1] - samotné dáta správy, túto položku je možné ľubovoľne rozšíriť, ako napríklad v ukážke kódu \ref{lst:msgbuf}, avšak s limitom, ktorý je maximálna dĺžka správy \textit{\textbf{MSGMAX}}=8192\footnote{Táto veľkosť je definovaná v \url{linux/msg.h} a môže sa líšiť od verzie jadra. Túto hodnotu je taktiež možné zistiť pomocou príkazu \textit{ipcs -l}.}
+\end{itemize}
+
+\begin{lstlisting}[
+  caption={Príklad vlastnej štruktúry správy},
+  label={lst:msgbuf},
+  language=c
+]
+struct message {
+    long type;
+    struct my_special_struct data;    
+} msg;
+\end{lstlisting}
+\subsubsection{msg\_msg a msg\_msgseg}
+Každá správa je rozdelená na stránky, ktoré sú dynamicky alokované v pamäti. Veľkosť tejto stránky je závislí od architektúry a zisťuje sa nasledovne \textit{sysconf(\_SC\_PAGESIZE)}. Štruktúra \textbf{\textit{msg\_msg}}, ktorú môžeme vidieť tu \ref{lst:msgmsg}, predstavuje hlavičku každej správy pričom sa inštancie tejto štruktúry nachádzajú v zreťazenom zozname, ktorý je definovaný položkou \textit{m\_list}. V prípade že dĺžka správy je menšia ako $$ \text{PAGE\_SIZE} - \text{sizeof(struct msg\_msg)} $$ celý obsah správy sa nachádza v pamäťovej oblasti za štruktúrou \textit{msg\_msg}. V opačnom prípade sa prvá časť správy nachádza na rovnakom mieste a ostatné stránky sa nachádzajú v pamäťovej oblasti, na ktorú ukazuje ukazovateľ \textit{next}. Tento ukazovateľ odkazuje na štruktúru \textit{msg\_msgseg} pozri \ref{lst:msgmsgseg}, ktorá obsahuje ukazovateľ \textit{next} na ďalšiu stránku, pričom v pamäťovej oblasti za touto štruktúrou sa nachádzajú dáta aktuálnej stránky.
+\begin{lstlisting}[
+  caption={Štruktúra msg\_msg},
+  label={lst:msgmsg},
+  language=c
+]
+struct msg_msg {
+	struct list_head m_list;
+	long m_type;
+	size_t m_ts;
+	struct msg_msgseg *next;
+	void *security;
+	/* obsah prvej stránky */
+};
+\end{lstlisting}
+
+\begin{lstlisting}[
+  caption={Štruktúra msg\_msgseg},
+  label={lst:msgmsgseg},
+  language=c
+]
+struct msg_msgseg {
+	struct msg_msgseg *next;
+	/* obsah stránky */
+};
+\end{lstlisting}
+
+\subsubsection{msg\_queue}
+Poslednou štruktúrou, ktorá sa nachádza najvyššie v hierarchií týchto štruktúr je \texttt{\textbf{msq\_queue}}\footnote{V staršej dokumentácii sa taktiež môžeme stretnúť so štruktúrou \texttt{msqid\_ds}, avšak ide o zastaralú štruktúru a momentálne sa v jadre nachádza len z dôvodu spätnej kompatibility} a jej deklaráciu môžete vidieť na ukážke kódu \ref{lst:msgmsgseg}. Najdôležitejšou položkou tejto štruktúry je položka\texttt{q\_messages}, ktorá predstavuje prvý element zreťazeného zoznamu všetkých správ vo fronte. Ďalšie zreťazené zoznamy, ktoré sa tu nachádzajú sú \texttt{q\_receivers} a \texttt{q\_senders}, ktoré obsahujú zreťazené zoznamy procesov, ktoré posielajú správy a procesov, ktoré prijímajú správy. Zaujímavou položkou z pohľadu bezpečnosti je položka \texttt{q\_perm}, ktorá obsahuje inštanciu štruktúry \texttt{\textbf{kern\_ipc\_perm}}. Túto štruktúru si popíšeme v kapitole \ref{kernipcperm}.
+\begin{lstlisting}[
+  caption={Štruktúra msq\_queue},
+  label={lst:msgmsgseg},
+  language=c
+]
+struct msg_queue {
+	struct kern_ipc_perm q_perm;
+	/* meta dáta */		
+	struct list_head q_messages;
+	struct list_head q_receivers;
+	struct list_head q_senders;
+} __randomize_layout;
+\end{lstlisting}
+\subsubsection{kern\_ipc\_perm} \label{kernipcperm}
+Štruktúra \texttt{kern\_ipc\_perm} sa nenachádza len pri fronte správ ale taktiež aj pri semaforoch a zdieľanej pamäti. Táto štruktúra predstavuje sadu meta dát o konkrétnom \acrshort{ipc} objekte a jej položky spolu s typmi môžeme vidieť na ukážke kódu \ref{lst:kernipcperm}. Vyznám týchto položiek je nasledovný:
+\begin{itemize}
+\item lock - uzamikací mechanizmus pre ochranu \acrshort{ipc} objektu
+\item deleted - príznak, či bol zdroj uvoľnený
+\item id
+\item key - jednoznačný identifikátor, v rámci konkrétneho typu objektu, to znamená, že jedna inštancia semafora, zdieľanej pamäte alebo fronty správ môže mať rovnaký identifikátor
+\item uid - ID používateľa, ktorý vlastní \acrshort{ipc} objekt
+\item gid - ID skupiny, ktorá vlastní \acrshort{ipc} objekt
+\item cuid - ID používateľa, ktorý vytvoril \acrshort{ipc} objekt
+\item cgid - ID skupiny, ktorá vytvorila \acrshort{ipc} objekt
+\item mode - bitová maska oprávnení
+\item seq - sekvenčné číslo, používané sa na vytvorenie nového identifikátora pre \acrshort{ipc} objekt
+\item security - ukazovateľ na štruktúru, ktorú vytvára zvolené bezpečnostné riešenie v jadre Linuxu
+\item khtnode
+\item rcu - \acrshort{rcu} synchronizačný mechanizmus
+\item refcount - počítadlo použití \acrshort{ipc} objektu
+\end{itemize}
+\begin{lstlisting}[
+  caption={Štruktúra kern\_ipc\_perm},
+  label={lst:kernipcperm},
+  language=c
+]
+struct kern_ipc_perm {
+	spinlock_t	lock;
+	bool		deleted;
+	int		id;
+	key_t		key;
+	kuid_t		uid;
+	kgid_t		gid;
+	kuid_t		cuid;
+	kgid_t		cgid;
+	umode_t		mode;
+	unsigned long	seq;
+	void		*security;
+	struct rhash_head khtnode;
+	struct rcu_head rcu;
+	refcount_t refcount;
+} ____cacheline_aligned_in_smp __randomize_layout;
+\end{lstlisting}
+\subsubsection{Požívanie fronty správ}
+Na vytvorenie fronty správ sa používa systémové volanie \texttt{msgget}. Toto systémové volanie má dva parametre, ktorými sú \texttt{key}(identifikátor objektu) a \texttt{msgflg} príznaky \acrshort{ipc} objektu. Nová fronta je vytvorená v prípadoch, že:
+\begin{itemize}
+\item \texttt{key} sa rovná \texttt{IPC\_PRIVATE}
+\item \texttt{key} nemá ešte priradený žiadny \acrshort{ipc} objekt a \texttt{IPC\_CREATE} príznak je definovaný v parametre \texttt{msglfg}
+\end{itemize}
+Ak je definovaný príznak \texttt{IPC\_EXCL} spolu s \texttt{IPC\_CREATE} a identifikátor už existuje, volanie funkcie zlyhá s chybovou správou \texttt{EEXIST}, ktorá definuje, že \acrshort{ipc} objekt už existuje. Naopak v prípade, že \texttt{IPC\_EXCL} nie je definované tak návratová hodnota je identifikátor už existujúceho \acrshort{ipc} objektu.
+
+Na posielanie a prijímanie správ z fronty sa používajú systémové volania \texttt{msgsnd} a \texttt{msgrcv}. Funkcia \texttt{msgsnd} má nasledovné parametre:
+\begin{itemize}
+\item \texttt{msgid} identifikátor fronty získaný z funkcie \texttt{msgget}
+\item \texttt{msgp} ukazovateľ na štruktúru, ktorú si používateľ definuje sám a mal by vychádzať zo šablóny ktorú sme si popísali v kapitole \ref{msgbuf}
+\item \texttt{msgsz} veľkosť dátovej štruktúry, ktorú chceme prenášať
+\item \texttt{msgflg} príznaky, ktoré definujú čo sa má diať v prípade, že je fronta plná
+\end{itemize}
+Funkcia \texttt{msgrcv}, odstráni správu z frontu a premiestni do pamäte, na ktorý ukazuje parameter funkcie \texttt{msgp}. Ďalšie parametre sú:
+\begin{itemize}
+\item \texttt{msgsz} maximálnu veľkosť dát v bytoch pre položku \texttt{mtext}, štruktúry, na ktorú ukazuje ukazovateľ \texttt{msgp}
+\item \texttt{msgflg} príznaky, ktoré definujú čo sa má diať v prípade, že je fronta prázdna
+\item \texttt{msgtyp} číslo, ktoré definuje ktorý typ správy bude ako prvý vybraný z fronty(nemôže byt definovaný príznak \texttt{MSG\_COPY}), v prípade že je definovaný príznak \texttt{MSG\_EXCEPT}, tak sa z fronty vyberá prvá správa z typom odlišným od \texttt{msgtyp}
+\end{itemize}
 \subsection{Semafory}
 \subsection{Zdieľaná pamäť}
 \subsection{Sokety}
+
+\section{Medusa}
+Medusa je bezpečnostný systém pre jadro Linux-u.
+
 \section{Úkážka glossaries}
 \noindent Verzia FEIstyle 1.5 používa glossary\footnote{\url{https://www.ctan.org/pkg/glossaries?lang=en}} balík.
 \acrfull{cdma} je dlhá skratka naopak \acrshort{gsm} je skratka v krátkej forme.
