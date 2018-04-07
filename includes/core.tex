@@ -140,7 +140,7 @@ struct msg_queue {
 \subsubsection{kern\_ipc\_perm} \label{kernipcperm}
 Štruktúra \texttt{kern\_ipc\_perm} sa nenachádza len pri fronte správ ale taktiež aj pri semaforoch a zdieľanej pamäti. Táto štruktúra predstavuje sadu meta dát o konkrétnom \acrshort{ipc} objekte a jej položky spolu s typmi môžeme vidieť na ukážke kódu \ref{lst:kernipcperm}. Vyznám týchto položiek je nasledovný:
 \begin{itemize}
-\item lock - uzamikací mechanizmus pre ochranu \acrshort{ipc} objektu
+\item lock - uzamykací mechanizmus pre ochranu \acrshort{ipc} objektu
 \item deleted - príznak, či bol zdroj uvoľnený
 \item id
 \item key - jednoznačný identifikátor, v rámci konkrétneho typu objektu, to znamená, že jedna inštancia semafora, zdieľanej pamäte alebo fronty správ môže mať rovnaký identifikátor
@@ -199,6 +199,34 @@ Funkcia \texttt{msgrcv}, odstráni správu z frontu a premiestni do pamäte, na 
 \item \texttt{msgtyp} číslo, ktoré definuje ktorý typ správy bude ako prvý vybraný z fronty(nemôže byt definovaný príznak \texttt{MSG\_COPY}), v prípade že je definovaný príznak \texttt{MSG\_EXCEPT}, tak sa z fronty vyberá prvá správa z typom odlišným od \texttt{msgtyp}
 \end{itemize}
 \subsection{Semafory}
+Semafor ako \acrshort{ipc} mechanizmus nepredstavuje nástoj na prenášanie dát ale slúži ako synchronizačný mechanizmus na ochranu zdieľaných zdrojov pri viac procesovom alebo viac vláknovom vykonávaný programu. Všeobecný semafor si môžme predstaviť ako počítadlo, ktoré je možné atomický upravovať. Semafor zvyčajne implementuje dve základné funkcie, ktoré slúžia na zvýšenie(\texttt{signal}) a zníženie(\texttt{wait}) tohto počítadla. Napríklad ak proces 1 chce vstúpiť do chránenej oblasti(pristúpiť k zdieľaným zdrojom) zníži počítadlo semaforu. Proces 2, ktorý taktiež bude chcieť pristúpiť k týmto zdrojom zníži semafor čo má za následok bloknutie procesu 2, ktorý musí počkať na zvýšenie počítadlo. Proces 1 v prípade že bude opúšťať kritickú oblasť zvýši počítadlo semaforu čo zabezpečí odblokovanie procesu 1.
+
+Semafor \textit{System V} semafory na rozdiel od \acrshort{posix} semaforov nepredstavujú len jedno počítadlo ale skupiny počítadiel. Každé jedno počítadlo môže chrániť nejakú kritickú oblasť a teda jeden \textit{System V} semafor môže chrániť viacero kritických oblastí. Veľkou výhodou je taktiež schopnosť navrátiť operácie vykonané na semafore v prípade, že proces, ktorý bol v kritickej oblasti neočakávane skončí a zabezpečiť tak aby čakajúci proces mohol vstúpiť do kritickej oblasti. 
+
+V nasledujúcich odsekoch si popíšeme interné štruktúry v jadre Linuxu, ktoré zabezpečujú fungovanie semaforov a taktiež aj použitie tohto \acrshort{ipc} mechanizmu.
+\subsubsection{Štruktúra \texttt{sem}}
+Základná štruktúra, ktorá v sebe nesie hodnotu jedného počítadla má nasledovné položky:
+\begin{itemize}
+\item \texttt{semval} hodnota počítadla
+\item \texttt{semval} \acrshort{pid} procesu, ktorý posledný modifikoval semafor
+\item \texttt{lock} uzamykací mechanizmus pre ochranu počítadla
+\item \texttt{pending\_alter} a \texttt{pending\_const} operácie, ktoré čakajú na vykonanie
+\item \texttt{sem\_otime} čas posledného volania funkcie \texttt{sem\_op} nad počítadlom
+\end{itemize}
+Nadradenou štruktúrou, ktorá predstavuje skupiny počítadiel je \texttt{sem\_array}, ktorá má nasledovné položky:
+\begin{itemize}
+\item \texttt{sem\_perm} štruktúra typu \texttt{kern\_ipc\_perm}, ktorú sme si popísali v kapitole \ref{kernipcperm}
+\item \texttt{sem\_ctime} čas posledného volania funkcie \texttt{sem\_ctl} nad semaforom
+\item \texttt{pending\_alter} a \texttt{pending\_const} operácie, ktoré čakajú na vykonanie
+\item \texttt{list\_id} spätné operácie na celú skupinu semaforov, ide o vlastnosť, ktorú sme si popísali v úvode do kapitoly
+\item \texttt{sem\_nsems} počet semaforov
+\item \texttt{complex\_count} počet komplexných operácii ktoré čakajú na vykonanie
+\item \texttt{use\_global\_lock} globálny uzamykací mechanizmus nad celou skupinou semaforov
+\item \texttt{\textbf{sems}} pole jednotlivých semaforov/počítadiel
+\end{itemize}
+Operácie, ktoré sa nad týmito semaformi vykonávajú sú uložené v štruktúre \texttt{sem\_queue}. Ide o zreťazený zoznam a každá jedna inštancia tejto štruktúry predstavuje operácie jedného procesu, ktorý je blokovaný(spí) na semafore.
+
+
 \subsection{Zdieľaná pamäť}
 \subsection{Sokety}
 
