@@ -304,6 +304,53 @@ Posledným systémovým volaním je \texttt{shmctl}, ktoré pracuje analogicky k
 
 Na prácu so zdieľanou pamäťou teda zapisovanie a čítanie z pamäte používame rovnaké nástroje ako na prácu s bežným súborom a teda na zapisovanie môžeme použiť napríklad \texttt{fprintf} a na čítanie \texttt{putchar}.
 \subsection{Sokety}
+Soket predstavuje obojsmernú komunikačnú rúru, ktorá môže byť použitá na široké množstvo oblastí. Jedna z najpoužívanejších oblastí pri soketoch je komunikácia cez Internet. Avšak sokety taktiež umožňujú aj lokálnu komunikáciu medzi dvoma procesmi.\cite{beej} Nakoľko sokety zaberajú široký záber v nasledujúcich odsekoch sa pokúsime tento koncept opísať na príklade lokálnych soketov a preto, niektoré informácie nemusia byť kompletné a pre odlišné použitie sa treba inštruovať podľa\cite{socket}.
+\subsubsection{Použitie soketov}
+Soket sa vytvára pomocou funkcie \texttt{socket} a vytvorenie lokálneho soketu vyzerá nasledovne:
+\begin{lstlisting}[
+  caption={Vytvorenie soketu},
+  label={lst:socket},
+  language=c
+]
+unsigned int s;
+s = socket(AF_UNIX, SOCK_STREAM, 0);
+\end{lstlisting}
+Prvý parameter \texttt{AF\_UNIX}(\texttt{AF\_LOCAL}) definuje že ide o lokálny soket, príznak \texttt{SOCK\_STREAM} určuje sekvenčný, spoľahlivý a obojsmerný typ komunikácie. Posledný parameter definuje protokol pre konkrétny typ komunikácie a väčšinou existuje len jeden takýto protokol. V prípade že volanie tejto funkcie je úspešné tak návratová hodnota je deskriptor súboru v opačnom prípade -1. 
+
+Takto vytvorený deskriptor je potrebné namapovať na nejakú cestu v súborovom systéme aby ju mohlo používať viacero procesov. Na tento účel nám slúži systémové volanie \texttt{bind}, ktoré môžeme použiť nasledovne:
+\begin{lstlisting}[
+  caption={\textit{Bindovanie} soketu},
+  label={lst:bind},
+  language=c
+]
+struct sockaddr_un local;
+unsigned int s;
+
+local.sun_family = AF_UNIX;
+strcpy(local.sun_path, "/home/mysocket");
+unlink(local.sun_path);
+bind(s, (struct sockaddr *)&local, sizeof(local));
+\end{lstlisting}
+Prvým parametrom tejto funkcie je deskriptor soketu, druhy parameter je ukazovateľ na štruktúru, typu \texttt{sockaddr}, typ tejto štruktúry sa líši od použitého typu komunikácie, v ukážke kódu \ref{lst:bind} používame štruktúru \texttt{sockaddr\_un}. Tretím parametrom je veľkosť štruktúry. Táto funkcia zabezpečí prepojenie medzi adresou soketu v súborovom systéme a súborovým deskriptorom.
+
+Takto vytvorené sokety je možné použiť dvomi spôsobmi a to buď ako server alebo ako klient. 
+
+Jednoduchý server s použitím soketov môžeme vidieť na ukážke kódu \ref{lst:server}. Na tejto ukážke kódu môžeme vidieť vytvorenie soketu a následne použitie funkcie \texttt{listen}, ktorej prvý parameter je deskriptor soketu a druhý parameter definuje maximálny počet požiadavok, ktoré môžu prísť pokiaľ nebude volaná funkcia \texttt{accept}. 
+
+Funkcia \texttt{accept} je blokovacia funkcia, ktorá blokuje vykonávanie programu\footnote{Ak nie je definovaný príznak \texttt{SOCK\_NONBLOCK}} pokiaľ sa nevytvorí spojenie. Argumenty tejto funkcie sú \texttt{sockfd}, \texttt{addr} a \texttt{addrlen}. \texttt{sockfd} je súborový deskriptor na ktorom akceptuje pripojenie, \texttt{addr} predstavujú štruktúru do ktorej bude uložená adresa klienta, ktorý sa pripojil a \texttt{addrlen} predstavuje veľkosť tejto štruktúry. Návratová hodnota funkcie je nový súborový deskriptor, ktorý bude slúžiť na komunikáciu s pripojeným klientom. 
+
+Takto vytvorený súborový deskriptor je možné použiť na zapisovanie alebo čítanie. Na čítanie používame funkciu \texttt{recv}. Táto funkcia je taktiež blokovacia a čaká pokiaľ nepríjme správu. Prvý argument funkcie je suborový deskriptor \texttt{sockfd}, druhým argumentom je \texttt{buf}, úložisko do ktorého bude uložená správa s dĺžkou maximálne \texttt{len}, čo je tretí parameter. Posledným parametrom tejto funkcie sú príznaky, ktoré pre jednoduchosť preskočíme. Funkcia \texttt{send} má rovnakú signatúru len s rozdielom že dáta ktoré sa nachádzajú v úložisku \texttt{buf} sú odoslané do soketu.
+
+Na druhej strane klient, ktorý chce odosielať a prijímať dáta cez soket potrebuje vytvoriť soket a následne zavolať funkciu \texttt{connect}. Táto funkcia má rovnakú signatúru ako funkcia \texttt{bind} a zabezpečuje pripojenie súborového deskriptora k soketu, ktorý je definovaný cestou \texttt{sun\_path} v štruktúre \texttt{sockaddr}, ktorá je druhým argumentom funkcie. Takto pripojený soket je možné používať pomocou vyššie spomínaných funkcii \texttt{send} a \texttt{recv}. Vytvorenie a používanie takéhoto klienta môžeme vidieť na ukážke kódu \ref{lst:client}.\cite{beej}
+
+
+
+
+
+
+
+
+
 
 \section{Medusa}
 Medusa je bezpečnostný systém pre jadro Linux-u.
