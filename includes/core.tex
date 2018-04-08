@@ -8,7 +8,7 @@
 \item Zdieľaná pamäť
 \item Sokety
 \end{itemize}
-V nasledujúcich odsekoch si bližšie popíšeme tieto mechanizmy.
+Jadro operačného systému Linux obsahuje dve implementácii rovnakého \acrshort{ipc} mechanizmov semafory, fronty správ a zdieľanej pamäte. Tieto implementácie sa nazývajú \textit{System V} a \textit{POSIX}. \textit{System V} pretože ide o staršiu implementáciu, ktorá je odvodená od komerčného Unix systému \textit{System V}. Implementácia \textit{POSIX} je štandard, ktorý taktiež implementuje tieto mechanizmy avšak funkcie a systémové volania sa líšia. Každá implementácia má svoje výhody a nevýhody, avšak implementácia \textit{POSIX} bola vyvinutá neskôr ako \acrshort{lsm} a teda nemá vytvorené \acrshort{lsm} \textit{hooky}, ktoré by mali dopad na túto diplomovú prácu. Preto v nasledujúcich odsekoch budeme popisovať \textit{System V} semafory(ďalej len semafory), \textit{System V} fronty správ(ďalej len fronty správ) a \textit{System V} zdieľané pamäte(ďalej len zdieľané pamäte).
 \subsection{Signály}
 Ide o jeden z najstarších \acrshort{ipc} mechanizmov používaný v Unix systémoch. Signál je asynchrónne upozornenie zaslané procesu alebo konkrétnemu vláknu v rámci toho istého procesu, za účelom upozornenia na udalosť, ktorá sa vyskytla. V momente keď sa signál odošle, operačný systém preruší vykonávanie procesu, ktorý má byť signalizovaný a v tomto procese sa vykoná obslúženie signálu.
 
