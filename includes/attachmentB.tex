@@ -85,5 +85,72 @@ struct msginfo {
 	unsigned short  msgseg; 
 };
 \end{lstlisting}
+\begin{lstlisting}[
+  caption={Štruktúra semid\_ds},
+  label={lst:semid},
+  language=c
+]
+struct semid_ds {
+	struct ipc_perm	sem_perm;		/* permissions .. see ipc.h */
+	__kernel_time_t	sem_otime;		/* last semop time */
+	__kernel_time_t	sem_ctime;		/* create/last semctl() time */
+	struct sem	*sem_base;		/* ptr to first semaphore in array */
+	struct sem_queue *sem_pending;		/* pending operations to be processed */
+	struct sem_queue **sem_pending_last;	/* last pending operation */
+	struct sem_undo	*undo;			/* undo requests on this array */
+	unsigned short	sem_nsems;		/* no. of semaphores in array */
+};
+\end{lstlisting}
+\begin{lstlisting}[
+  caption={Štruktúra semid64\_ds},
+  label={lst:semid64},
+  language=c
+]
+struct semid64_ds {
+	struct ipc64_perm sem_perm;	/* permissions .. see ipc.h */
+	__kernel_time_t	sem_otime;	/* last semop time */
+	__kernel_ulong_t __unused1;
+	__kernel_time_t	sem_ctime;	/* last change time */
+	__kernel_ulong_t __unused2;
+	__kernel_ulong_t sem_nsems;	/* no. of semaphores in array */
+	__kernel_ulong_t __unused3;
+	__kernel_ulong_t __unused4;
+};
+\end{lstlisting}
+\begin{lstlisting}[
+  caption={Štruktúra semun},
+  label={lst:semun},
+  language=c
+]
+union semun {
+	int val;			/* value for SETVAL */
+	struct semid_ds __user *buf;	/* buffer for IPC_STAT & IPC_SET */
+	unsigned short __user *array;	/* array for GETALL & SETALL */
+	struct seminfo __user *__buf;	/* buffer for IPC_INFO */
+	void __user *__pad;
+};
+\end{lstlisting}
+\begin{lstlisting}[
+  caption={Štruktúra shmid\_kernel},
+  label={lst:shmid},
+  language=c
+]
+struct shmid_kernel /* private to the kernel */
+{	
+	struct kern_ipc_perm	shm_perm;
+	struct file		*shm_file;
+	unsigned long		shm_nattch;
+	unsigned long		shm_segsz;
+	time64_t		shm_atim;
+	time64_t		shm_dtim;
+	time64_t		shm_ctim;
+	pid_t			shm_cprid;
+	pid_t			shm_lprid;
+	struct user_struct	*mlock_user;
 
+	/* The task created the shm object.  NULL if the task is dead. */
+	struct task_struct	*shm_creator;
+	struct list_head	shm_clist;	/* list by creator */
+} __randomize_layout;
+\end{lstlisting}
 

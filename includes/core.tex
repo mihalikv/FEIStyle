@@ -77,8 +77,8 @@ Návratová hodnota funkcie je 0 v prípade úspechu a v prípade chyby je návr
 
 \subsection{Fronty správ}
 Fronty správ si najlepšie môžme predstaviť ako zreťazený zoznam v adresnom priestore jadra. Správy môžu byť odosielané do fronty v poradí a následne načítané z fronty pomocou niekoľko rôznych spôsobov. Každá fronta správ je jednoznačne identifikovaná pomocou \acrshort{ipc} identifikátora. Pre lepšie pochopenie tohto konceptu si popíšeme 3 hlavné štruktúry, ktoré zabezpečujú fungovanie fronty správ v jadre Linuxu.
-\subsubsection{msgbuf} \label{msgbuf}
-Táto štruktúra (definovaná v \url{linux/msg.h}) predstavuje predlohu ako by mala vyzerať správa, ktorú budeme posielať. Táto predloha obsahuje dve položky: 
+\subsubsection{Štruktúry semaforov}
+Štruktúra \texttt{msgbuf} (definovaná v \url{linux/msg.h}) predstavuje predlohu ako by mala vyzerať správa, ktorú budeme posielať. Táto predloha obsahuje dve položky: 
 \begin{itemize}
 \item long \textbf{mtype} - umožňuje určiť o aký typ správy ide, napríklad \textit{chybová správa}, \textit{normálna správa} a podobne, možností je nekonečno
 \item char \textbf{mtext}[1] - samotné dáta správy, túto položku je možné ľubovoľne rozšíriť, ako napríklad v ukážke kódu \ref{lst:msgbuf}, avšak s limitom, ktorý je maximálna dĺžka správy \textit{\textbf{MSGMAX}}=8192\footnote{Táto veľkosť je definovaná v \url{linux/msg.h} a môže sa líšiť od verzie jadra. Túto hodnotu je taktiež možné zistiť pomocou príkazu \textit{ipcs -l}.}
@@ -94,7 +94,7 @@ struct message {
     struct my_special_struct data;    
 } msg;
 \end{lstlisting}
-\subsubsection{msg\_msg a msg\_msgseg}
+
 Každá správa je rozdelená na stránky, ktoré sú dynamicky alokované v pamäti. Veľkosť tejto stránky je závislí od architektúry a zisťuje sa nasledovne \textit{sysconf(\_SC\_PAGESIZE)}. Štruktúra \textbf{\textit{msg\_msg}}, ktorú môžeme vidieť tu \ref{lst:msgmsg}, predstavuje hlavičku každej správy pričom sa inštancie tejto štruktúry nachádzajú v zreťazenom zozname, ktorý je definovaný položkou \textit{m\_list}. V prípade že dĺžka správy je menšia ako $$ \text{PAGE\_SIZE} - \text{sizeof(struct msg\_msg)} $$ celý obsah správy sa nachádza v pamäťovej oblasti za štruktúrou \textit{msg\_msg}. V opačnom prípade sa prvá časť správy nachádza na rovnakom mieste a ostatné stránky sa nachádzajú v pamäťovej oblasti, na ktorú ukazuje ukazovateľ \textit{next}. Tento ukazovateľ odkazuje na štruktúru \textit{msg\_msgseg} pozri \ref{lst:msgmsgseg}, ktorá obsahuje ukazovateľ \textit{next} na ďalšiu stránku, pričom v pamäťovej oblasti za touto štruktúrou sa nachádzajú dáta aktuálnej stránky.
 \begin{lstlisting}[
   caption={Štruktúra msg\_msg},
@@ -122,7 +122,6 @@ struct msg_msgseg {
 };
 \end{lstlisting}
 
-\subsubsection{msg\_queue}
 Poslednou štruktúrou, ktorá sa nachádza najvyššie v hierarchií týchto štruktúr je \texttt{\textbf{msq\_queue}} a jej deklaráciu môžete vidieť na ukážke kódu \ref{lst:msgmsgseg}. Najdôležitejšou položkou tejto štruktúry je položka\texttt{q\_messages}, ktorá predstavuje prvý element zreťazeného zoznamu všetkých správ vo fronte. Ďalšie zreťazené zoznamy, ktoré sa tu nachádzajú sú \texttt{q\_receivers} a \texttt{q\_senders}, ktoré obsahujú zreťazené zoznamy procesov, ktoré posielajú správy a procesov, ktoré prijímajú správy. Zaujímavou položkou z pohľadu bezpečnosti je položka \texttt{q\_perm}, ktorá obsahuje inštanciu štruktúry \texttt{\textbf{kern\_ipc\_perm}}. Túto štruktúru si popíšeme v kapitole \ref{kernipcperm}.
 \begin{lstlisting}[
   caption={Štruktúra msq\_queue},
@@ -137,7 +136,7 @@ struct msg_queue {
 	struct list_head q_senders;
 } __randomize_layout;
 \end{lstlisting}
-\subsubsection{kern\_ipc\_perm} \label{kernipcperm}
+\subsubsection{Štruktúra kern\_ipc\_perm} \label{kernipcperm}
 Štruktúra \texttt{kern\_ipc\_perm} sa nenachádza len pri fronte správ ale taktiež aj pri semaforoch a zdieľanej pamäti. Táto štruktúra predstavuje sadu meta dát o konkrétnom \acrshort{ipc} objekte a jej položky spolu s typmi môžeme vidieť na ukážke kódu \ref{lst:kernipcperm}. Vyznám týchto položiek je nasledovný:
 \begin{itemize}
 \item lock - uzamykací mechanizmus pre ochranu \acrshort{ipc} objektu
@@ -166,7 +165,7 @@ Ak je definovaný príznak \texttt{IPC\_EXCL} spolu s \texttt{IPC\_CREATE} a ide
 Na posielanie a prijímanie správ z fronty sa používajú systémové volania \texttt{msgsnd} a \texttt{msgrcv}. Funkcia \texttt{msgsnd} má nasledovné parametre:
 \begin{itemize}
 \item \texttt{msgid} identifikátor fronty získaný z funkcie \texttt{msgget}
-\item \texttt{msgp} ukazovateľ na štruktúru, ktorú si používateľ definuje sám a mal by vychádzať zo šablóny ktorú sme si popísali v kapitole \ref{msgbuf}
+\item \texttt{msgp} ukazovateľ na štruktúru, ktorú si používateľ definuje sám a mal by vychádzať zo šablóny ktorú sme si popísali v kapitole \ref{lst:msgbuf}
 \item \texttt{msgsz} veľkosť dátovej štruktúry, ktorú chceme prenášať
 \item \texttt{msgflg} príznaky, ktoré definujú čo sa má diať v prípade, že je fronta plná
 \end{itemize}
@@ -180,14 +179,14 @@ Posledným systémovým volaním tohto mechanizmu je \texttt{msgctl}, ktoré vyk
 \begin{itemize}
 \item \texttt{msgid} identifikátor objektu
 \item \texttt{cmd} typ operácie
-\item \texttt{buf} ide o štruktúru, ktorá sa v jadre ako aj v manuálových stránkach nachádza v 32 bitovej verzií(viď \ref{msqid}), avšak v jadre sa označuje za zastaralú pričom ju nahrádza 64 bitová verzia(viď \ref{msqid64}), táto štruktúra slúži na prenos meta dát z jadra systému do užívateľského priestoru
+\item \texttt{buf} ide o štruktúru, ktorá sa v jadre ako aj v manuálových stránkach nachádza v 32 bitovej verzií(viď \ref{lst:msqid}), avšak v jadre sa označuje za zastaralú pričom ju nahrádza 64 bitová verzia(viď \ref{lst:msqid64}), táto štruktúra slúži na prenos meta dát z jadra systému do užívateľského priestoru
 \end{itemize}
 Typy operácie nad frontami správ sú nasledovné:
 \begin{itemize}
 \item \texttt{IPC\_STAT} a \texttt{MSG\_STAT} kopíruje informácie z jadra do štruktúry na ktorú ukazuje ukazovateľ \texttt{buf}
 \item \texttt{IPC\_SET} nastavuje položky jadra na základe ukazovateľa \texttt{buf}, konkrétne \texttt{msg\_perm.uid}, \texttt{msg\_perm.gid}, \texttt{msg\_qbytes} a posledných 9 bitov \texttt{msg\_perm.mode}
 \item \texttt{IPC\_RMID} odstraňuje frontu správ
-\item \texttt{IPC\_INFO} a \texttt{MSG\_INFO} získava limity a systémové nastavenia pre fronty správ, dáta sa nachádzajú na adrese ukazovateľa \texttt{buf}, avšak dáta sú v štruktúre typu \texttt{msginfo}(viď \ref{msginfo}) a preto je potrebné pre-typovanie\footnote{\texttt{IPC\_INFO} a \texttt{MSG\_INFO} ako aj \texttt{IPC\_STAT} a \texttt{MSG\_STAT} vracajú mierne odlišné dáta a sú platformovo závislé pre viac info pozri \url{http://man7.org/linux/man-pages/man2/msgctl.2.html}}
+\item \texttt{IPC\_INFO} a \texttt{MSG\_INFO} získava limity a systémové nastavenia pre fronty správ, dáta sa nachádzajú na adrese ukazovateľa \texttt{buf}, avšak dáta sú v štruktúre typu \texttt{msginfo}(viď \ref{lst:msginfo}) a preto je potrebné pre-typovanie\footnote{\texttt{IPC\_INFO} a \texttt{MSG\_INFO} ako aj \texttt{IPC\_STAT} a \texttt{MSG\_STAT} vracajú mierne odlišné dáta a sú platformovo závislé pre viac info pozri \url{http://man7.org/linux/man-pages/man2/msgctl.2.html}}
 \end{itemize}
 \subsection{Semafory}
 Semafor ako \acrshort{ipc} mechanizmus nepredstavuje nástoj na prenášanie dát ale slúži ako synchronizačný mechanizmus na ochranu zdieľaných zdrojov pri viac procesovom alebo viac vláknovom vykonávaný programu. Všeobecný semafor si môžme predstaviť ako počítadlo, ktoré je možné atomický upravovať. Semafor zvyčajne implementuje dve základné funkcie, ktoré slúžia na zvýšenie(\texttt{signal}) a zníženie(\texttt{wait}) tohto počítadla. Napríklad ak proces 1 chce vstúpiť do chránenej oblasti(pristúpiť k zdieľaným zdrojom) zníži počítadlo semaforu. Proces 2, ktorý taktiež bude chcieť pristúpiť k týmto zdrojom zníži semafor čo má za následok bloknutie procesu 2, ktorý musí počkať na zvýšenie počítadlo. Proces 1 v prípade že bude opúšťať kritickú oblasť zvýši počítadlo semaforu čo zabezpečí odblokovanie procesu 1.
@@ -195,7 +194,7 @@ Semafor ako \acrshort{ipc} mechanizmus nepredstavuje nástoj na prenášanie dá
 Semafor \textit{System V} semafory na rozdiel od \acrshort{posix} semaforov nepredstavujú len jedno počítadlo ale skupiny počítadiel. Každé jedno počítadlo môže chrániť nejakú kritickú oblasť a teda jeden \textit{System V} semafor môže chrániť viacero kritických oblastí. Veľkou výhodou je taktiež schopnosť navrátiť operácie vykonané na semafore v prípade, že proces, ktorý bol v kritickej oblasti neočakávane skončí a zabezpečiť tak aby čakajúci proces mohol vstúpiť do kritickej oblasti. 
 
 V nasledujúcich odsekoch si popíšeme interné štruktúry v jadre Linuxu, ktoré zabezpečujú fungovanie semaforov a taktiež aj použitie tohto \acrshort{ipc} mechanizmu.
-\subsubsection{Štruktúry \textit{System V} semaforov}
+\subsubsection{Štruktúry semaforov}
 Základná štruktúra, ktorá v sebe nesie hodnotu jedného počítadla má nasledovné položky:
 \begin{itemize}
 \item \texttt{semval} hodnota počítadla
@@ -247,8 +246,63 @@ Jednotlivé operácie sú definované pomocou štruktúry \texttt{sembuf}, ktor�
 \item \texttt{sem\_op} == 0 a \texttt{semval} == 0 tak operácia okamžite prebehne, inak ak je definovaný príznak \texttt{IPC\_NOWAIT} operácie skončí s chybou ak však tento príznak nieje definovaný proces čaká pokiaľ bude semafor 0(vyžaduje práva na čítanie semaforu)
 \item \texttt{sem\_op} < 0 a zároveň \texttt{semval} >= \texttt{sem\_op} tak je operácia vykonaná okamžite, inak analogicky k predošlému prípadu operácia skončí buď s chybou alebo proces čaká pokiaľ bude zvýšená hodnota počítadla(vyžaduje sa právo na zápis)
 \end{itemize}
-Poseldným systé
+Posledným systémovým volaním je \texttt{semctl}, ktoré rovnako ako systémové volanie \texttt{msgctl} z kapitoly \ref{msguse} získava alebo zapisuje informácie o \acrshort{ipc} objekte avšak s rozdielom že využíva odlišnú štruktúru na ukladanie dát. \texttt{semctl} má nasledovné argument:
+\begin{itemize}
+\item \texttt{semid} identifikátor objektu
+\item \texttt{semnum} index semaforu v skupine semaforov
+\item \texttt{cmd} typ operácie
+\item \texttt{arg} posledný argument je voliteľný podľa typu operácie, ide o union, ktorý je definovaný na ukážke kódu \ref{lst:semun}
+\end{itemize}
+Typy operácii, ktoré sme si definovali pri \texttt{msgctl} taktiež existujú aj pri semafóroch a zachovávajú rovnakú funkcionalitu ale výsledok týchto operácií sa ukladá do položky \texttt{arg.buf}, ktorá je typu \texttt{semid\_ds}(viď \ref{lst:semid}) pre 32 bitové systéme alebo \texttt{semid64\_ds}(viď \ref{lst:semid64}) pre 64 bitové systémy. Toto systémové volanie umožňuje aj semaforovo špecifické operácie, ktoré sú nasledovné:
+\begin{itemize}
+\item \texttt{GETALL}/\texttt{SETALL} vráti/nastaví hodnotu každého počítadla v skupine semaforov a uloží ho do položky \texttt{arg.array}, parameter \texttt{semnum} je ignorovaný
+\item \texttt{GETNCNT}/\texttt{GETZCNT} vráti počet procesov, ktoré čakajú na zvýšenie(\texttt{GETNCNT}) alebo zníženie(\texttt{GETZCNT}) konkrétneho počítadla, ktoré je definované argumentom \texttt{semnum}
+\item \texttt{GETPID} vráti PID procesu, ktorý posledný vykonal operáciu nad počítadlom, ktoré je definované argumentom \texttt{semnum}
+\item \texttt{GETVAL} vráti hodnotu jedného konkrétneho počítadla definovaného pomocou \texttt{semnum}
+\item \texttt{SETVAL} nastaví hodnotu, ktorá je v položke \texttt{arg.val}, jedného konkrétneho počítadla definovaného pomocou \texttt{semnum}
+\end{itemize}
 \subsection{Zdieľaná pamäť}
+Zdieľaná pamäť predstavuje užitočný mechanizmus, ktorý umožňuje dvom alebo viacerým procesom pristupovať k spoločným dátovým štruktúram, ktoré sú uložené v oblasti zdieľanej pamäte \acrshort{ipc}.\cite{linux} Proces, ktorý chce takúto zdieľanú pamäť používať potrebuje namapovať túto pamäť na adresný priestor procesu. Následne túto pamäť môže používať akoby lokálnu pamäť, čo nevyžaduje prepínanie do módu jadra a preto tento \acrshort{ipc} mechanizmus patrí medzi najrýchlejšie.\cite{newlinux}
+\subsubsection{Štruktúry zdieľanej pamäte}
+Hlavnou štruktúrou, ktorá má informácie o objektoch zdieľanej pamäte je \texttt{shmid\_kernel}, ktorej položky sú nasledovné:
+\begin{itemize}
+\item \texttt{shm\_perm} štruktúra typu \texttt{kern\_ipc\_perm}, ktorú sme si popísali v kapitole \ref{kernipcperm}
+\item \texttt{shm\_file} pointer na štruktúru \texttt{file}, ktorá predstavuje zdieľaný pamäťoví priestor
+\item \texttt{shm\_nattch} počet procesov, ktoré sú \textit{pripojené} k zdieľanej pamäti
+\item \texttt{shm\_segsz} veľkosť pamäťového segmentu
+\item \texttt{shm\_atim}/\texttt{shm\_dtim}/\texttt{shm\_ctim} sú posledné časy prístupu/odpojenia/zmeny
+\item \texttt{shm\_cprid} \acrshort{pid} procesu, ktorý vytvoril objekt
+\item \texttt{shm\_lprid} \acrshort{pid} procesu, ktorý posledný pristupoval ku objektu
+\item \texttt{mlock\_user} ukazovateľ na štruktúru \texttt{user\_struct}, ktorá definuje používateľa, ktorý zamkol zdieľanú pamäť v \acrshort{ram}\footnote{pre viac info pozri \url{http://man7.org/linux/man-pages/man2/mlock.2.html}}
+\item \texttt{shm\_creator} ukazovateľ na štruktúru \texttt{task\_struct}, ktorý definuje proces, ktorý vytvoril zdieľanú pamäť(NULL v prípade že bol proces ukončený)
+\item \texttt{shm\_clist} zoznam štruktúr \texttt{shmid\_kernel}, ktoré majú rovnaký proces, ktorý ich vytvoril
+\end{itemize}
+Najdôležitejšou položkou je \texttt{shm\_file}, ktorá predstavuje samotnú zdieľanú pamäť a keďže ide o súbor, môžeme vidieť blízke prepojenie s Linux \acrshort{vfs}. Avšak nejde o normálny súbor a nie je možné ho nájsť v strome súborového systému, pretože sa využíva špeciálny \textit{shm} súborový systém.\cite{linux} Preto ak proces chce zapisovať alebo čítať z tohoto pamäťového segmentu je potrebne aby sa pripojil. Ako na to sa dozvieme v kapitole \ref{shmuse}.
+\subsubsection{Požitie zdieľanej pamäte} \label{shmuse}
+Zdieľanú pamäť podobne ako ostatne \textit{System V} mechanizmy je možné vytvoriť pomocou systémového volania \texttt{shmget}. Toto systémové volanie sa líši v argumente \texttt{size}, ktorý určuje akú veľkú pamäť chceme alokovať, pričom táto pamäť je zaokrúhlená nahor k najbližšiemu násobku \texttt{PAGE\_SIZE}. Jedným z rozdielov je taktiež možnosť definovať príznaky \texttt{SHM\_HUGETLB}, \texttt{SHM\_HUGE\_2MB} a \texttt{SHM\_HUGE\_1GB}, ktoré signalizujú alokáciu s použitím \textit{huge pages}\footnote{Pre viac info pozri \url{https://elixir.bootlin.com/linux/latest/source/Documentation/vm/hugetlbpage.txt}}. Posledný z príznakov je \texttt{SHM\_NORESERVE}, ktorý definuje že sa nemá rezervovať \textit{swap} pamäť.
+
+Nad takto vytvorenou zdieľanou pamäťou je možné robiť dve operácie \texttt{shmat} a \texttt{shmdt}. \texttt{shmat} pripojí zdieľanú pamäť do adresného priestoru procesu, argumenty sú nasledovné:
+\begin{itemize}
+\item \texttt{shmid} identifikátor zdieľanej pamäte
+\item \texttt{shmaddr} adresa na ktorú sa zdieľaná pamäť pripojí, môže nadobudnúť nasledovné hodnoty:
+\begin{itemize}
+\item \texttt{NULL} systém sám vyberie najvhodnejšiu nepoužívanú adresu
+\item rôzna od \texttt{NULL} a zároveň je definovaný príznak \texttt{SMH\_RND} tak pamäť je pripojená a zarovnaná dole na najbližší násobok  \texttt{SHMLBA}\footnote{Táto hodnota je zväčša násobok \texttt{PAGE\_SIZE} a na väčšine Linuxových architektúrach je rovnaká ako \texttt{PAGE\_SIZE}} ak však príznak nie je definovaný adresa musí byť zarovnaná na násobok \texttt{PAGE\_SIZE} a následne môže byť pamäť pripojená
+\end{itemize}
+\item \texttt{shmflg} môže nadobudnúť nasledovné hodnoty
+\begin{itemize}
+\item \texttt{SHM\_EXEC} povoľuje spúšťanie obsahu, ktorý sa nachádza v zdieľanej pamäti 
+\item \texttt{SHM\_RDONLY} pripojí proces len s prístupom na čítanie, ak príznak nie je definovaný proces sa bude pripájať s prístupom na čítanie a zápis avšak \textbf{proces musí mať práva na čítanie a zápis} 
+\item \texttt{SHM\_REMAP} príznak povoľuje prepísanie existujúceho mapovania, \texttt{shmaddr} nesmie byť \texttt{NULL}
+\end{itemize}
+\end{itemize}
+Po úspešnom pripojení funkcia \texttt{shmat} vracia adresu pripojenej pamäte v opačnom prípade \texttt{(void *) -1}. 
+
+Na odpojenie od zdieľanej pamäte sa používa funkcia \texttt{shmdt}, ktorá má jeden argument \texttt{shmaddr}, ktorý definuje adresu na ktorej je zdieľaná pamäť pripojená. Táto funkcia vracia 0 v prípade úspechu, inak vracia -1.
+
+Posledným systémovým volaním je \texttt{shmctl}, ktoré pracuje analogicky k systémovému volaniu \texttt{msgctl} o ktorom sa môžete viac dočítať v závere kapitoly \ref{msguse}. \texttt{shmctl} poskytuje na rozdiel od \texttt{msgctl} 2 príznaky, ktoré sú \texttt{SHM\_LOCK} a \texttt{SHM\_UNLOCK}. Tieto príznaky povoľujú alebo zabraňujú \textit{swapovaniu} zdieľanej pamäte. \texttt{SHM\_UNLOCK} definuje, že napríklad v situáciu veľkého vyťaženia pamäte môže \textit{swap} pamäte.\cite{shmctl}
+
+Na prácu so zdieľanou pamäťou teda zapisovanie a čítanie z pamäte používame rovnaké nástroje ako na prácu s bežným súborom a teda na zapisovanie môžeme použiť napríklad \texttt{fprintf} a na čítanie \texttt{putchar}.
 \subsection{Sokety}
 
 \section{Medusa}
