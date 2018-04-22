@@ -10,17 +10,17 @@
 \end{itemize}
 Jadro operačného systému Linux obsahuje dve implementácii rovnakého \acrshort{ipc} mechanizmov semafory, fronty správ a zdieľanej pamäte. Tieto implementácie sa nazývajú \textit{System V} a \textit{POSIX}. \textit{System V} pretože ide o staršiu implementáciu, ktorá je odvodená od komerčného Unix systému \textit{System V}. Implementácia \textit{POSIX} je štandard, ktorý taktiež implementuje tieto mechanizmy avšak funkcie a systémové volania sa líšia. Každá implementácia má svoje výhody a nevýhody, avšak implementácia \textit{POSIX} bola vyvinutá neskôr ako \acrshort{lsm} a teda nemá vytvorené \acrshort{lsm} \textit{hooky}, ktoré by mali dopad na túto diplomovú prácu. Preto v nasledujúcich odsekoch budeme popisovať \textit{System V} semafory(ďalej len semafory), \textit{System V} fronty správ(ďalej len fronty správ) a \textit{System V} zdieľané pamäte(ďalej len zdieľané pamäte).
 \subsection{Signály}
-Ide o jeden z najstarších \acrshort{ipc} mechanizmov používaný v Unix systémoch. Signál je asynchrónne upozornenie zaslané procesu alebo konkrétnemu vláknu v rámci toho istého procesu, za účelom upozornenia na udalosť, ktorá sa vyskytla. V momente keď sa signál odošle, operačný systém preruší vykonávanie procesu, ktorý má byť signalizovaný a v tomto procese sa vykoná obslúženie signálu.
+Ide o jeden z najstarších \acrshort{ipc} mechanizmov používaný v Unix systémoch. Signál je asynchrónne upozornenie zaslané procesu alebo konkrétnemu vláknu v rámci toho istého procesu, za účelom upozornenia na udalosť, ktorá sa vyskytla. V momente keď sa signál odošle, operačný systém preruší vykonávanie procesu, ktorý má byť signalizovaný a v tomto procese sa vykoná obslúženie signálu.\cite{signal}
 
 Je potrebné si uvedomiť že \textbf{signály nie sú} to isté ako \textbf{prerušenia}. Rozdiel medzi signálom a prerušením je, že prerušenie je vyvolané procesorom a signál je vyvolaný z jadra systému.
-Signál je možné vyvolať systémovým volaním \textbf{kill}. Toto systémové volanie má dva parametre:
+Signál je možné vyvolať systémovým volaním \textbf{kill}. Toto systémové volanie má dva parametre\cite{kill}:
 \begin{itemize}
 \item \textit{pid} - identifikátor procesu, ktorý má byť signalizovaný
 \item \textit{sig} - typ signálu
 \end{itemize}
 Podporované typy je možné zistiť pomocou príkazu \textit{kill -l} alebo v súbore \textit{/include/linux/signal.h}.
 
-V prípade že je definovaná obslužná funkcia, táto funkcia sa vykoná, v opačnom prípade je použitá štandardná obsluha signálu. Obslužnú funkciu je možné definovať pomocou funkcie \textbf{signal}, avšak správanie tejto funkcie môže byť rozdielne vzhľadom na platformu. Preto sa odporúča používať funkciu \textbf{sigaction}, ktorá bola definovaná v štandarde \textbf{POSIX.1}. Toto systémové volanie má parametere:
+V prípade že je definovaná obslužná funkcia, táto funkcia sa vykoná, v opačnom prípade je použitá štandardná obsluha signálu. Obslužnú funkciu je možné definovať pomocou funkcie \textbf{signal}, avšak správanie tejto funkcie môže byť rozdielne vzhľadom na platformu. Preto sa odporúča používať funkciu \textbf{sigaction}, ktorá bola definovaná v štandarde \textbf{POSIX.1}. Toto systémové volanie má parametere\cite{sigaction}:
 \begin{itemize}
 \item \textit{signum} - typ signálu, ktorý chceme obslúžiť
 \item \textit{act} - definuje akciu, ktorá sa má vykonať pri obsluhe signálu
@@ -29,7 +29,7 @@ V prípade že je definovaná obslužná funkcia, táto funkcia sa vykoná, v op
 
 \textbf{Signály} je možné použiť pre komunikáciu ako aj synchronizáciu avšak ide o veľmi slabý nástroj pre tieto potreby.\footnote{\url{http://man7.org/conf/lca2013/IPC_Overview-LCA-2013-printable.pdf}}
 \subsection{Rúry}
-Rúry predstavujú jednosmerný tok dát medzi procesmi: všetky dáta zapísané procesom do rúry sú jadrom   presmerované do iného procesu, ktorý z nej môže čítať. Poznáme 2 druhy rúr:
+Rúry predstavujú jednosmerný tok dát medzi procesmi: všetky dáta zapísané procesom do rúry sú jadrom   presmerované do iného procesu, ktorý z nej môže čítať. Poznáme 2 druhy rúr \cite{linux}:
 \begin{itemize}
 \item Anonymné rúry - žiadny objekt v súborovom strome
 \item Pomenované rúry - objekt v súborovom strome
@@ -40,9 +40,9 @@ Rúry predstavujú jednosmerný tok dát medzi procesmi: všetky dáta zapísan�
 \item write - rúra je plná
 \item read - rúra je prázdna
 \end{itemize}
-Niektoré \textit{Unix} systémy ako napríklad \textit{System V Release 4}, implementuje \textbf{full-duplex} rúry, teda rúry, pri ktorých oba konce rúry(súborové deskriptory) je možné použiť ako na zapisovanie tak aj na čítanie. Avšak štandard \textbf{\acrshort{posix}} definuje iba \textbf{half-duplex} rúry, pričom každý proces musí zatvoriť jeden deskriptor pred použitím druhého.
+Niektoré \textit{Unix} systémy ako napríklad \textit{System V Release 4}, implementuje \textbf{full-duplex} rúry, teda rúry, pri ktorých oba konce rúry(súborové deskriptory) je možné použiť ako na zapisovanie tak aj na čítanie. Avšak štandard \textbf{\acrshort{posix}} definuje iba \textbf{half-duplex} rúry, pričom každý proces musí zatvoriť jeden deskriptor pred použitím druhého.\cite{linux}
 
-Takto vytvorená rúra umožňuje komunikáciu medzi rodičovským procesom a jeho potomkami. Avšak je potrebné zabezpečiť aby procesy, ktoré medzi sebou chcú komunikovať zdieľali rovnaké súborové deskriptory. Toto je možné jednoducho dosiahnuť tak, že sa rúra vytvorí pred vytvorením detského procesu(\textit{fork}). Zjednodušený pseudokód môžeme vidieť tu \ref{lst:pipe-c} spolu s ilustračný obrázkom \ref{pipeflow}.
+Takto vytvorená rúra umožňuje komunikáciu medzi rodičovským procesom a jeho potomkami. Avšak je potrebné zabezpečiť aby procesy, ktoré medzi sebou chcú komunikovať zdieľali rovnaké súborové deskriptory. Toto je možné jednoducho dosiahnuť tak, že sa rúra vytvorí pred vytvorením detského procesu(\textit{fork}). Zjednodušený pseudokód môžeme vidieť tu \ref{lst:pipe-c} spolu s ilustračný obrázkom \ref{pipeflow}.\cite{overview}
 \begin{lstlisting}[
   caption={Použite anonymných rúr},
   label={lst:pipe-c},
@@ -66,18 +66,18 @@ if (child_pid == 0) {
   \label{pipeflow}
 \end{figure}
 
-Nevýhodou tohto systémového volania je absencia v súborovom strome a teda nie je možné využiť tento \acrshort{ipc} mechanizmus na komunikáciu medzi ľubovoľnými dvoma alebo viacerými procesmi.
+Nevýhodou tohto systémového volania je absencia v súborovom strome a teda nie je možné využiť tento \acrshort{ipc} mechanizmus na komunikáciu medzi ľubovoľnými dvoma alebo viacerými procesmi.\cite{overview}
 \subsubsection{Pomenované rúry}
 Pomenované rúry taktiež nazývané aj \textbf{\acrshort{fifo}} na rozdiel od anonymných rúr máju meno v súborovom systéme. Jednou z možností ako vytvoriť tento typ rúry je pomocou funkcie \textbf{mkfifo}, ktorá je definovaná v štandarde \acrshort{posix}. Táto funkcia v svojej implementácií volá systémové volanie \textit{mknod} s príznakom, ktorý definuje že ide o pomenovanú rúru. Funkcia \textbf{mkfifo} má 2 parametre:
 \begin{itemize}
 \item \textit{pathname} - názov rúry
 \item \textit{mode} - práva súboru 
 \end{itemize}
-Návratová hodnota funkcie je 0 v prípade úspechu a v prípade chyby je návratová hodnota -1. Takto vytvorenú rúru je možné rovnako ako anonymné rúry obsluhovať pomocou systémových volaní \textit{read} a \textit{write}.
+Návratová hodnota funkcie je 0 v prípade úspechu a v prípade chyby je návratová hodnota -1. Takto vytvorenú rúru je možné rovnako ako anonymné rúry obsluhovať pomocou systémových volaní \textit{read} a \textit{write}.\cite{mkfifo}
 
 \subsection{Fronty správ}
-Fronty správ si najlepšie môžme predstaviť ako zreťazený zoznam v adresnom priestore jadra. Správy môžu byť odosielané do fronty v poradí a následne načítané z fronty pomocou niekoľko rôznych spôsobov. Každá fronta správ je jednoznačne identifikovaná pomocou \acrshort{ipc} identifikátora. Pre lepšie pochopenie tohto konceptu si popíšeme 3 hlavné štruktúry, ktoré zabezpečujú fungovanie fronty správ v jadre Linuxu.
-\subsubsection{Štruktúry semaforov}
+Fronty správ si najlepšie môžme predstaviť ako zreťazený zoznam v adresnom priestore jadra. Správy môžu byť odosielané do fronty v poradí a následne načítané z fronty pomocou niekoľko rôznych spôsobov. Každá fronta správ je jednoznačne identifikovaná pomocou \acrshort{ipc} identifikátora. Pre lepšie pochopenie tohto konceptu si popíšeme 3 hlavné štruktúry, ktoré zabezpečujú fungovanie fronty správ v jadre Linuxu.\cite{guide}
+\subsubsection{Štruktúry fronty správ}
 Štruktúra \texttt{msgbuf} (definovaná v \url{linux/msg.h}) predstavuje predlohu ako by mala vyzerať správa, ktorú budeme posielať. Táto predloha obsahuje dve položky: 
 \begin{itemize}
 \item long \textbf{mtype} - umožňuje určiť o aký typ správy ide, napríklad \textit{chybová správa}, \textit{normálna správa} a podobne, možností je nekonečno
@@ -343,120 +343,58 @@ Takto vytvorený súborový deskriptor je možné použiť na zapisovanie alebo 
 
 Na druhej strane klient, ktorý chce odosielať a prijímať dáta cez soket potrebuje vytvoriť soket a následne zavolať funkciu \texttt{connect}. Táto funkcia má rovnakú signatúru ako funkcia \texttt{bind} a zabezpečuje pripojenie súborového deskriptora k soketu, ktorý je definovaný cestou \texttt{sun\_path} v štruktúre \texttt{sockaddr}, ktorá je druhým argumentom funkcie. Takto pripojený soket je možné používať pomocou vyššie spomínaných funkcii \texttt{send} a \texttt{recv}. Vytvorenie a používanie takéhoto klienta môžeme vidieť na ukážke kódu \ref{lst:client}.\cite{beej}
 
-
-
-
-
-
-
-
-
-
 \section{Medusa}
-Medusa je bezpečnostný systém pre jadro Linux-u.
+V 90. rokoch 20. storočia sa na Fakulte Elektrotechniky a Informatiky zrodil bezpečnostný systém Medusa. Tento bezpečnostný systém od svojho počiatku prešiel niekoľkými výraznými zmenami a v súčasnej podobe predstavuje bezpečnostnú politiku, ktorá funguje nad rámec základnej bezpečnosti v Linux(oprávnenia a skupiny). Tento bezpečnostný systém na svoje plnohodnotné fungovanie vyžaduje autorizačný systém, ktorý rozhoduje o povolení alebo zamietnutí nejakej akcie. Fungovanie tohto bezpečnostného riešenia v jadre systému Linux umožňuje \acrshort{lsm} framework, ktorý využívajú aj ostatné bezpečnostné riešenia ako napríklad \acrshort{SELinux}. Princíp fungovanie ako aj jednotlivé pojmy si vysvetlíme v nasledovný kapitolách.
 
-\section{Úkážka glossaries}
-\noindent Verzia FEIstyle 1.5 používa glossary\footnote{\url{https://www.ctan.org/pkg/glossaries?lang=en}} balík.
-\acrfull{cdma} je dlhá skratka naopak \acrshort{gsm} je skratka v krátkej forme.
-\section{Recitácia}
-Citujem všetky zdroje v \textbf{bibliography.bib}, \cite{t00, t01, t02, t03, kniha, kniha2, kniha3, small, big, cs, koll, kap, tug, knuth, zbornik, prispevok}. \newline Good luck.
-\section{Možnosti anonymizácie}
-\noindent Anonymizácia znamená zmena alebo úprava údajov tak, aby sa podľa nich nedala jednoznačne určiť osoba, ktorej tieto údaje patria \cite{t01}. Existuje niekoľko spôsobov, ktorými môžeme dosiahnuť rôznu úroveň anonymizácie na internete: od mazania cookies súborov po ukončení prehliadania webových stránok až po používanie operačných systémov, ktoré sú na anonymite založené; od bezplatných možností až po komerčné verzie.  
-\newline Nasleduje priblíženie niektorých možnosti anonymizácie.
+\subsection{\acrshort{lsm} framework}
+\acrfull{lsm} framework poskytuje mechanizmus, ktorý umožňuje pripojiť nové bezpečnostné rozšírenie do jadra. Avšak v skutočnosti nejde o modul ako by sa mohlo z názvu zdať, nakoľko rozšírenia, ktoré chceme zakomponovať do jadra je potrebné vybrať počas kompilácie jadra za pomoci konfigurácie a možnosti \textit{CONFIG\_DEFAULT\_SECURITY}. Takto zakomponované bezpečnostné riešenie je následne možné vybrať počas načítavanie jadra pomocou argumentu \textit{security=...} v príkazovom riadku jadra.\cite{lsm}
 
-\subsection{Súkromné prehliadanie}
-\noindent Najpoužívanejšie internetové prehliadače súčasnosti majú v sebe zabudovanú funkcionalitu, ktorá dokáže čiastočne anonymizovať prístup na internet. Táto funkcionalita blokuje ukladanie navštívených stránok do histórie a nezaznamenáva súbory, ktoré sa stiahnu z~internetu. \acrshort{sw} a \acrlong{hw} sú skratky.
+Bezpečnostné riešenia, ktoré chcú implementovať nejakú bezpečnostnú politiku sú závislé od funkcii, ktoré \acrshort{lsm} framework poskytuje. Tieto funkcie sú definované v hlavičkovom súbore \url{./include/linux/lsm_hooks.h} a predstavujú vstupný bod kde môže bezpečnostné riešenie definovať ľubovoľnú bezpečnostnú politiku. Tieto funkcie sú volané pri rôznych udalostiach, ktoré sa v jadre Linuxu vyskytnú. V prípade že bezpečnostné riešenie chce implementovať obsluhu takejto funkcie je potrebné použiť makro \textit{LSM\_HOOK\_INIT}, ktorého prvý parameter je názov funkcie \acrshort{lsm} frameworku a druhý parameter je obslužná funkcia v nami definovanom bezpečnostnom riešení.\cite{medusavilo} Tieto obslužné funkcie majú návratovú hodnotu typu \textit{int}, ktorá môže nadobudnúť nasledovné hodnoty:
+\begin{itemize}
+\item 0 udalosť, ktorá nastala, bezpečnostný mechanizmus povoľuje
+\item !0 napríklad \textit{-EPERM} udalosť, ktorá nastala, bezpečnostný mechanizmus zakazuje
+\end{itemize}
+ 
+\subsection{Autorizačný server}
+Autorizačný server je špecifická entita pre bezpečnostné riešenie Medusa a predstavuje rozhodovací prvok. Ide o program, ktorý pracuje v užívateľskom prostredí a prostredníctvom soketu a definovaného komunikačného protokolu \textbf{prijíma}, \textbf{rozhoduje} a \textbf{vracia} odpoveď do jadra systému. Rozhodovanie autorizačného servera je vykonávané na základe konfiguračného súboru, ktorý definuje čo je povolené a čo nie. Výhodou takéhoto oddeleného rozhodovacieho prvku je možnosť použitia jedného autorizačného serveru pre viacero systémov s bezpečnostným systémom Medusa. Momentálne existujú dve implementácie autorizačného serveru:
+\begin{itemize}
+\item \textit{Constable} - implementovaný v jazyku C, syntax konfiguračného súboru podobná jazyku C, ťažko čitateľný zdrojový kód 
+\item \textit{mYstable} - implementovaný v jazyku Python, konfiguračný súbor v jazyku Python
+\end{itemize}
 
-\begin{table}[!htbp]
-\caption{Moduly a ich funkcie pri anonymizácii}
-\label{modulyVlastnosti}
-\begin{center}
-\begin{tabular}{p{4cm}|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c}
-& \multicolumn{14}{c}%
-	 {\textbf{Funkcia}}\\ \hline
-&&&& & &\multicolumn{8}{c}%
-	 {Modifikácia}\\ 
-\textbf{Modul} &\begin{sideways} zobrazenie hlavičky \end{sideways} &\begin{sideways} blokovanie skriptov \end{sideways} &\begin{sideways} zmena IP \end{sideways} & \begin{sideways} zmena lokalizácie \end{sideways} & \begin{sideways} zmazanie/blokovanie cookies \end{sideways} & \begin{sideways} blokovanie trackerov \end{sideways}  & \begin{sideways} popis \end{sideways} & \begin{sideways}používateľský agent\end{sideways} & \begin{sideways} kódové označenie prehliadača \end{sideways} & \begin{sideways} názov prehliadača \end{sideways} & \begin{sideways} verzia prehliadača \end{sideways} & \begin{sideways} platforma \end{sideways} & \begin{sideways} výrobca prehliadača \end{sideways} & \begin{sideways} označenie výrobcu prehliadača \end{sideways} \\ \hline
-User agent switcher & & & & & &  & X & X & X & X & X & X & X & X  \\ \hline
-Ghostery &  && & & X & X &  &  & & & & & & \\  \hline
-Better privacy && &  & & X &  &  &  & & & & & & \\  \hline
-Anonymox &  && X & X & X &  & X & X & & & & & & \\  \hline
-Modify headers & & &  &  & X &  &  & X &  &  &  & & &  \\  \hline
-Request policy & & &  &  & & X  &  &  &  &  &  & & &   \\  \hline
-Live HTTP headers & X& &  &  & &  &  &  &  &  &  & & &   \\  \hline
-User agent awitcher for chrome & & &  &  & &  & X & X &  &  &  & & &   \\  \hline
-Header hacker & & &  &  & &  & X & X & X & X & X & X & X & X    \\  \hline
-Mod header & & &  &  & &  & X & X & X & X & X & X & X & X    \\  \hline
-Script no & &X &  &  & &  &  &  &  &  &  &  &  &     \\  \hline
-No script & &X &  &  & &  &  &  &  &  &  &  &  &     \\  \hline
-Proxify it & & &X  & X & &  &  &  &  &  &  &  &  &     \\  \hline
-I'm not here & & &  & X & &  &  &  &  &  &  &  &  &     \\  \hline
-Get anonymous personal edition & &X &X &X &X&X &  &  &  &  &  &  &  &     \\  \hline
-Anonymous browsing toolbar & & & X & X & &  &  &  &  &  &  &  &  &     \\  \hline
-Easy hide your IP and surf anonymously & & & X & X& &  &  & X & X & X & X &  &  &     \\  \hline
-\end{tabular}
-\end{center}
-\end{table}
+\subsection{Princíp fungovania}
+Úlohou bezpečnostného systému Medusa v procese rozhodovania je zachytiť udalosť, ktorá sa v jadre systému vykonala a následne túto udalosť spracovať a vytvoriť štruktúry, ktoré sú definované v komunikačnom protokole. Pre lepšie pochopenie fungovania systému Medusa je potrebné si popísať dve základné entity, ktoré sú \textbf{\textit{k-objekt}} a \textbf{typy prístupov}.
+\subsubsection{k-objekt}
+\textit{K-objekt} je štruktúra systému Medusa, ktorá v sebe nesie informácie o nejakej internej štruktúre jadra ako napríklad \textit{inode} alebo \textit{process}. Rozlišujeme dva typy štruktúr:
+\begin{itemize}
+\item subjekt - ide o \textit{k-objekt}, ktorý vykonáva nejakú operáciu
+\item objekt - ide o \textit{k-objekt}, nad ktorým je vykonávaná nejaká operácia
+\end{itemize}
+Na definovanie typu sa používajú makrá \textit{MEDUSA\_SUBJECT\_VARS} a \textit{MEDUSA\_OBJECT\_VARS}, ktoré rozširujú \textit{k-objekt} o interné položky \textit{Medusy}.\cite{kacer}
+\textit{K-objekt} môže obsahovať rôzne položky, ktoré z hľadiska konfigurácie rozhodovania považujeme za dôležité. Napríklad \textit{k-objekt} procesu obsahuje položky, ktoré sú odvodené z internej štruktúry jadra \textit{task\_struct} a tieto položky môžeme vidieť na definícii štruktúry \ref{lst:kobjekt}. Z definície môžeme vidieť, že tento \textit{k-objekt} môže vystupovať ako objekt ale aj ako subjekt. Takto definovanej štruktúre je možné priradiť operácie, ktoré autorizačný server môže potrebovať. Poznáme 2 typy operácii:
+\begin{itemize}
+\item \textbf{\textit{fetch}} - operácie, pri ktorej sú prenesené dáta z jadra do \textit{k-objektu}
+\item \textbf{\textit{update}} - operácie, pri ktorej je aktualizovaná interná štruktúra jadra dátami \textit{k-objektu}
+\end{itemize}
+Tieto operácie umožňujú autorizačnému serveru meniť stav systému alebo sa informovať o zmene dát v jadre.
+\subsubsection{Typy prístupov}
+\textbf{Typy prístupov} v \textit{Meduse} predstavujú obsluhu pre jednotlivé funkcie \acrshort{lsm} frameworku. \textit{Typ prístupu} definuje subjekt a objekt(\textit{k-objekty}), ktoré vystupujú pri rozhodovaní. Ďalej \textit{typ prístupu} definuje extra dáta, ktoré sa nevzťahujú ani ku subjektu ani ku objektu ale ku konkrétnej udalosti, ktorá sa uskutočnila. A v neposlednom rade \textit{typ prístupu} má za úlohu vytvorenie a konverziu dát jadra na \textit{k-objekt}. 
 
-\subsection{Anonymná sieť}
-\noindent Anonymná sieť je sieť serverov, medzi ktorými dáta prechádzajú šifrované. V anonymných sieťach dáta prechádzajú z počítača používateľa, odkiaľ bola požiadavka poslaná, cez viaceré proxy smerovače, z ktorých každý správu doplní o smerovanie a zašifruje vlastným kľúčom. Cesta od ...
+\textit{Medusa} obsahuje aj špeciálny \textit{typ prístupu}, ktorý sa nazýva \textit{udalosť}. \textit{Udalosti} narozdiel od \textit{typu prístupu} nereagujú na \textit{lsm} framework, ale \textit{udalosť} je volaná interne v rámci \textit{Medusy} a slúži na inicializáciu \textit{k-objektu} v autorizačnom servery.\cite{kacer} \textit{Udalosti} sú volané vždy pred \textit{typom prístupu} aby sa zabezpečilo, že \textit{typ prístupu} bude volaní s validným \textit{k-objektom}.
 
-
-\subsection{Funkcionalita}
-\noindent  Rozšírenie tiež okrem splnenia špecifikácie malo pre prehľadnosť a overenie funkčnosti zobrazovať údaje, ktoré boli na server odoslané. Zoznam údajov odoslaných na server, sa mal ukladať do krátkodobej histórie, aby nemal používateľ k dispozícií len najnovšie údaje, ale aj údaje odoslané v nejakom časovom období. Nejaky listing z priloh \ref{lst:sublime}.
-
-\subsubsection{Funkcionalita2}
-\noindent Samozrejmosťou bolo nastavenie zapnutia rozšírenia pri štarte, prípadne interval zmeny odosielaných údajov.
-
-\subsection{Vzhľad}
-\noindent Dôležitou požiadavkou kladenou na rozšírenie bolo príjemné používateľské rozhranie. Z~tohto dôvodu malo rozšírenie obsahovať zoznam modifikovaných vlastností a tlačidlo pre prístup k nastaveniam rozšírenia v jednoduchej a praktickej forme. Predpokladaný vzhľad je zobrazený na obrázku č. \ref{vzhladobr}.
+\textit{Typy prístupov} majú taktiež za úlohu kontrolovať prienik virtuálnych svetov. \textbf{Virtuálne svety} predstavujú skupiny do ktorých je možné zaradovať \textit{k-objekty}. V prípade že sa dva rôzne \textit{k-objekty} nachádzajú v rôznych virtuálnych svetoch je možné automaticky operáciu zamietnuť. Priraďovanie \textit{k-objektov} do virtuálnych svetov sa uskutočňuje na základe konfigurácie. Virtuálne svety taktiež zrýchľujú rozhodovanie nakoľko v prípade rôznych virtuálnych svetov je možné bez zásahu autorizačného serveru rozhodnúť.
+\subsection{Architektúra}
+Systém \textit{Medusa} sa skladá z 5 vrstiev a ich funkcie sú nasledovné:
+\begin{itemize}
+\item L0 - registrácia funkcii \textit{lsm} frameworku pre skorú inicializáciu, táto vrstva zabezpečuje správnu inicializáciu systémových štruktúr pri štarte systému, tejto problematike sa venuje \cite{medusatim}
+\item L1 - registrácia všetkých funkcii \textit{lsm} frameworku, teda aj tých ktoré neboli registrované vo vrstve L1
+\item L2 - \textit{typy prístupov}, \textit{udalosti} a \textit{k-objekty}
+\item L3 - registrovanie a odregistrovanie entít z vrstvy L2
+\item L4 - komunikačná vrstva, ktorá definuje aj komunikačný protokol, ktorý je možné vidieť na obrázku \ref{medusakomunikacia}, tento protokol je detailnejšie popísaný v diplomovej práci \textit{MEDÚZA DS9}\cite{kacer}
+\end{itemize}
 \begin{figure}[!htbp]
   \centering
-  \includegraphics[width=8cm]{img/vzhlad.png}
-  \caption{Predpokladaný vzhľad rozšírenia.}
-  \label{vzhladobr}
-\end{figure}	 
-\noindent Dôležitou požiadavkou kladenou na rozšírenie bolo príjemné používateľské rozhranie.\cite{t00} Z~tohto dôvodu malo rozšírenie obsahovať zoznam modifikovaných vlastností a tlačidlo pre prístup k nastaveniam rozšírenia v jednoduchej a praktickej forme. Predpokladaný vzhľad je zobrazený na obrázku č. \ref{vzhladobr}.
-
-\begin{algorithm}
-\scriptsize
-\begin{algorithmic}
- \STATE <text>
- \IF{<condition>} \STATE {<text>} \ELSE \STATE{<text>} \ENDIF
- \IF{<condition>} \STATE {<text>} \ELSIF{<condition>} \STATE{<text>} \ENDIF
- \FOR{<condition>} \STATE {<text>} \ENDFOR
- \FOR{<condition> \TO <condition> } \STATE {<text>} \ENDFOR
- \FORALL{<condition>} \STATE{<text>} \ENDFOR
- \WHILE{<condition>} \STATE{<text>} \ENDWHILE
- \REPEAT \STATE{<text>} \UNTIL{<condition>}
- \LOOP \STATE{<text>} \ENDLOOP
- \REQUIRE <text>
- \ENSURE <text>
- \RETURN <text>
- \PRINT <text>
- \COMMENT{<text>}
- \AND, \OR, \XOR, \NOT, \TO, \TRUE, \FALSE
-\end{algorithmic}
-\caption{Ukážka príkazov pre algorithmic}  
-\label{alg:preview}  
-\end{algorithm}
-
-\begin{lstlisting}[
-  caption={Ukážka algoritmu},
-  label={lst:main-c},
-  language=c
-]
-/* Hello World program */
-
-#include<stdio.h>
-
-struct cpu_info {
-    long unsigned utime, ntime, stime, itime;
-    long unsigned iowtime, irqtime, sirqtime;
-};
-
-main()
-{
-    printf("Hello World");
-}
-\end{lstlisting}
+  \includegraphics[width=12cm]{img/komunikacia.png}
+  \caption{Schéma komunikačného protokolu\cite{kacer}}
+  \label{medusakomunikacia}
+\end{figure}

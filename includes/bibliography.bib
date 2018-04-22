@@ -4,7 +4,7 @@
 %% Saved with string encoding Unicode (UTF-8) 
 
 @BOOK{linux,
-  author = {Marco Cesati, Daniel P. Bovet}, 
+  author = {Marco Cesati and Daniel P. Bovet}, 
   year={2005},
   title = {Understanding the Linux Kernel}, 
   subtitle = {Third Edition},
@@ -24,16 +24,25 @@
   isbn =  {978-1785883057}
 }
 
+@ARTICLE{overview,
+  author = {Michael Kerrisk}, 
+  year={2013},
+  title = {An introduction to Linux IPC},
+  url={http://man7.org/conf/lca2013/IPC_Overview-LCA-2013-printable.pdf}
+}
+
 @MANUAL{shmctl,
   year={2017},
   title = {SHMCTL(2) Linux Programmer's Manual},
-  edition= {4.15}
+  edition= {4.15},
+  url={http://man7.org/linux/man-pages/man2/shmctl.2.html}
 }
 
 @MANUAL{socket,
   year={2017},
   title = {SOCKET(2) Linux Programmer's Manual},
-  edition= {4.15}
+  edition= {4.15},
+  url={http://man7.org/linux/man-pages/man2/socket.2.html}
 }
 
 @ARTICLE{beej,
@@ -44,159 +53,74 @@
   url = {http://beej.us/guide/bgipc/html/multi/index.html},
 }
 
-@INCOLLECTION{t02,
-  author = {Greenberg, David}, 
-  year = {1998},
-  title = {Camel drivers and gatecrashers},
-  subtitle = {quality control in the digital research library},
-  editor = {Hawkins, B.L and Battin, P},
-  booktitle = {The mirage of continuity},
-  booksubtitle = {reconfiguring academic information resources for the 21st  century}, 
-  location = {Washington (D.C.)}, 
-  publisher = {Council on Library and Information Resources; Association of American Universities}, 
-  pages = {105-116}
+@MANUAL{lsm,
+  title = {Linux Security Module Usage},
+  edition= {4.16.0},
+  url = {https://www.kernel.org/doc/html/v4.16/admin-guide/LSM/index.html},
 }
 
-@ARTICLE{t03,
-  author = {LYNCH, C.},
-  year = {2005},
-  title = {Where do we go from here?},
-  subtitle = {the next decade for digital libraries},
-  journaltitle = {DLib Magazine},
-  volume =  {11},
-  number = {7/8},
-  urldate ={2005-08-15},
-  url = {http://www.dlib.org/dlib/july05/lynch/07lynch.html}, 
-  issn = {1082-9873}
+@MANUAL{mkfifo,
+  year={2017},
+  title = {MKFIFO(3)  Linux Programmer's Manual},
+  edition= {4.15},
+  url = {http://man7.org/linux/man-pages/man3/mkfifo.3.html}
 }
 
-@ARTICLE{cr,
-  author = {{Národní knihovna}},
-  title = {A big paper},
-  journaltitle = {The journal of big papers},
-  year = {1991},
-  volume = {12},
-  number = {3},
-  issn={2232-332X}
+@mastersthesis{kacer,
+    author    = {Ján Káčer},
+    title     = "Medúza {DS9}",
+    school    = {STU FEI},
+    type     = {diploma thesis},
+    year      = {2014},
+    note = {FEI-5384-64746}
 }
 
-@BOOK{kniha,
-  title = {A big paper},
-  subtitle={Podtitul},
-  publisher = {Academia},
-  year = {1991},
-  author = {Děťa, Hugh and Rychlík, Tomáš},
-  edition = {2},
-  pagetotal = {550},
-  location = {Praha},
-  series={Pokusná edice},
-  isbn={978-44-55-X},
-  url={http://pokus.cz},
-  comment={Dostupné také z WWW},
-  urldate = {2011-01-12}
+@mastersthesis{medusavilo,
+    author    = {Viliam Mihálik},
+    title     = "Implementácia ďalších systémových volaní do Medusy",
+    school    = {STU FEI},
+    type     = {bachelor thesis},
+    year      = {2016},
+    note = {FEI-5382-72886}
 }
 
-@BOOK{kniha2,
-  title = {Úplně úžasná knížka},
-  year = {1991},
-  author = {Děťa, Hugh and Rychlík, Tomáš and Další, Pepa and Spousta, Pepa and Skoro, Moc and Ale, Nestačí and Hodně},
-  edition = {3},
-  address = {Praha}
+@ARTICLE{medusatim,
+  author = {V. Mihálik and R. Ploszek and M. Smolár and M. Smoleň and P. Sýs}, 
+  year={2017},
+  title = {Medusa tímový projekt}
 }
 
-@BOOK{kniha3,
-  title = {Úplně úžasná knížka},
-  year = {1991},
-  author = {Děťa, Hugh and Rychlík, Tomáš and Další, Pepa and Spousta, Pepa and Skoro, Moc and Ale, Nestačí and Hodně},
-  edition = {3},
-  publisher={MIT Press},
-  address = {Praha},
-  pagetotal={332}
+@ARTICLE{signal,
+  author = {Rusling, David A},
+  title = {Interprocess Communication Mechanisms},
+  year = {1996-1999},
+  url = {https://www.tldp.org/LDP/tlk/ipc/ipc.html},
 }
 
-@ARTICLE{small,
-  author = {Freely, I.P.},
-  title = {A small paper},
-  subtitle = {Podtitulek},
-  journaltitle = {The journal of small papers},
-  year = {1997},
-  volume = {1},
-  note = {to appear},
-  pages={2-5},
-  number={3}
+@ARTICLE{guide,
+  author = {Sven Goldt and Sven van der Meer and Scott Burkett and Matt Welsh},
+  title = {The Linux Programmer's Guide},
+  year = {1995},
+  url = {http://tldp.org/LDP/lpg/lpg.html},
 }
 
-@ARTICLE{big,
-  author = {Jass, Hugh},
-  title = {A big paper},
-  journal = {The journal of big papers},
-  year = {1991},
-  volume = {23}
+@MANUAL{kill,
+  year={2017},
+  title = {KILL(2) Linux Programmer's Manual},
+  edition= {4.15},
+  url = {http://man7.org/linux/man-pages/man2/kill.2.html},
 }
 
-@ARTICLE{cs,
-  COMMENT_OUTauthor = {Černý, Hugh},
-  title = {Titulek},
-  journal = {The journal of big papers},
-  year = {1991},
-  volume = {12},
-  pages = {22-44},
-  doi = {10.112.22/jkn},
-  number = {2},
+@MANUAL{socket,
+  year={2017},
+  title = {SOCKET(2) Linux Programmer's Manual},
+  edition= {4.15},
+  url = {http://man7.org/linux/man-pages/man2/socket.2.html},
 }
 
-@BOOK{koll,
-  author = {Kollmannová, Ludmila and Bubeníková, Libuše and Kopecká, Alena},
-  title = {Angličtina pro samouky}, 
-  edition = {5},
-  location = {Praha}, 
-  publisher = {Státní pedagogické nakladatelství}, 
-  year = {1977}, 
-  pagetotal = {525},
-  series = {Učebnice pro samouky},
-  number = {4},
-  isbn = {80-04-25663-5}
-}
-
-@INBOOK{kap,
-  author = {Novotná, Pepina},
-  title = {Podkapitola},
-  pages = {22-29},
-  chapter = {2.},
-  crossref = {koll}
-}
-
-@PERIODICAL{tug,
-  journaltitle = {TUGBoat},
-  publisher = {TUG},
-  issn = {1222-3333},
-  date = {1980/},
-  options = {skipbib=true},
-  url={http://tugboat.tug.org/}
-}
-
-@ARTICLE{knuth,
-  author = {Knuth, Donald},
-  title = {Journeys of \TeX},
-  volume = {17},
-  number = {3},
-  year = {2003},
-  pages = {12-22},
-  url = {http://tugboat.tug.org/kkk.pdf},
-  crossref={tug}
-}
-
-@COLLECTION{zbornik,
-title = {Mimořádně užitečný sborník},
-editor = {Geniální, Jiří},
-year = {2007},
-location = {Praha},
-publisher = {Academia},
-isbn = {978-222-626-222-2}
-}
-@INCOLLECTION{prispevok,
-crossref = {zbornik},
-title = {Velmi zajímavý článek},
-author = {Vlaštovka, Josef},
-pages = {22-45}
+@MANUAL{sigaction,
+  year={2017},
+  title = {SIGACTION(2) Linux Programmer's Manual},
+  edition= {4.15},
+  url = {http://man7.org/linux/man-pages/man2/sigaction.2.html},
 }
