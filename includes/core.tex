@@ -8,7 +8,7 @@
 \item Zdieľaná pamäť
 \item Sokety
 \end{itemize}
-Jadro operačného systému Linux obsahuje dve implementácii rovnakého \acrshort{ipc} mechanizmov semafory, fronty správ a zdieľanej pamäte. Tieto implementácie sa nazývajú \textit{System V} a \textit{POSIX}. \textit{System V} pretože ide o staršiu implementáciu, ktorá je odvodená od komerčného Unix systému \textit{System V}. Implementácia \textit{POSIX} je štandard, ktorý taktiež implementuje tieto mechanizmy avšak funkcie a systémové volania sa líšia. Každá implementácia má svoje výhody a nevýhody, avšak implementácia \textit{POSIX} bola vyvinutá neskôr ako \acrshort{lsm} a teda nemá vytvorené \acrshort{lsm} \textit{hooky}, ktoré by mali dopad na túto diplomovú prácu. Preto v nasledujúcich odsekoch budeme popisovať \textit{System V} semafory(ďalej len semafory), \textit{System V} fronty správ(ďalej len fronty správ) a \textit{System V} zdieľané pamäte(ďalej len zdieľané pamäte).
+Jadro operačného systému Linux obsahuje dve rôzne implementácie pre semafory, fronty správ a zdieľanú pamäť. Tieto implementácie sa nazývajú \textit{System V} a \textit{POSIX}. \textit{System V} je staršia implementácia, ktorá je odvodená od komerčného Unix systému \textit{System V}. Implementácia \textit{POSIX} je štandard, ktorý taktiež implementuje tieto mechanizmy avšak funkcie a systémové volania sa líšia. Každá implementácia má svoje výhody a nevýhody, avšak implementácia \textit{POSIX} bola vyvinutá neskôr ako \acrshort{lsm} a teda nemá vytvorené \acrshort{lsm} \textit{hooky}, ktoré by mali dopad na túto diplomovú prácu. Preto v nasledujúcich odsekoch budeme popisovať \textit{System V} semafory(ďalej len semafory), \textit{System V} fronty správ(ďalej len fronty správ) a \textit{System V} zdieľanú pamäť(ďalej len zdieľaná pamäť).
 \subsection{Signály}
 Ide o jeden z najstarších \acrshort{ipc} mechanizmov používaný v Unix systémoch. Signál je asynchrónne upozornenie zaslané procesu alebo konkrétnemu vláknu v rámci toho istého procesu, za účelom upozornenia na udalosť, ktorá sa vyskytla. V momente keď sa signál odošle, operačný systém preruší vykonávanie procesu, ktorý má byť signalizovaný a v tomto procese sa vykoná obslúženie signálu.\cite{signal}
 
@@ -122,7 +122,7 @@ struct msg_msgseg {
 };
 \end{lstlisting}
 
-Poslednou štruktúrou, ktorá sa nachádza najvyššie v hierarchií týchto štruktúr je \texttt{\textbf{msq\_queue}} a jej deklaráciu môžete vidieť na ukážke kódu \ref{lst:msgmsgseg}. Najdôležitejšou položkou tejto štruktúry je položka\texttt{q\_messages}, ktorá predstavuje prvý element zreťazeného zoznamu všetkých správ vo fronte. Ďalšie zreťazené zoznamy, ktoré sa tu nachádzajú sú \texttt{q\_receivers} a \texttt{q\_senders}, ktoré obsahujú zreťazené zoznamy procesov, ktoré posielajú správy a procesov, ktoré prijímajú správy. Zaujímavou položkou z pohľadu bezpečnosti je položka \texttt{q\_perm}, ktorá obsahuje inštanciu štruktúry \texttt{\textbf{kern\_ipc\_perm}}. Túto štruktúru si popíšeme v kapitole \ref{kernipcperm}.
+Poslednou štruktúrou, ktorá sa nachádza najvyššie v hierarchií týchto štruktúr je \texttt{\textbf{msq\_queue}} a jej deklaráciu môžete vidieť na ukážke kódu \ref{lst:msgmsgseg}. Najdôležitejšou položkou tejto štruktúry je položka\texttt{q\_messages}, ktorá predstavuje prvý element zreťazeného zoznamu všetkých správ vo fronte. Ďalšie zreťazené zoznamy, ktoré sa tu nachádzajú sú \texttt{q\_receivers} a \texttt{q\_senders}, ktoré obsahujú zreťazené zoznamy procesov, ktoré posielajú správy a procesov, ktoré prijímajú správy. Zaujímavou položkou z pohľadu bezpečnosti je položka \texttt{q\_perm}, ktorá obsahuje inštanciu štruktúry \texttt{\textbf{kern\_ipc\_perm}}. Túto štruktúru si popíšeme v kapitole \ref{kernipcperm}.\cite{linux}
 \begin{lstlisting}[
   caption={Štruktúra msq\_queue},
   label={lst:msgmsgseg},
@@ -160,28 +160,28 @@ Na vytvorenie fronty správ sa používa systémové volanie \texttt{msgget}. To
 \item \texttt{key} sa rovná \texttt{IPC\_PRIVATE}
 \item \texttt{key} nemá ešte priradený žiadny \acrshort{ipc} objekt a \texttt{IPC\_CREATE} príznak je definovaný v parametre \texttt{msglfg}
 \end{itemize}
-Ak je definovaný príznak \texttt{IPC\_EXCL} spolu s \texttt{IPC\_CREATE} a identifikátor už existuje, volanie funkcie zlyhá s chybovou správou \texttt{EEXIST}, ktorá definuje, že \acrshort{ipc} objekt už existuje. Naopak v prípade, že \texttt{IPC\_EXCL} nie je definované tak návratová hodnota je identifikátor už existujúceho \acrshort{ipc} objektu.
+Ak je definovaný príznak \texttt{IPC\_EXCL} spolu s \texttt{IPC\_CREATE} a identifikátor už existuje, volanie funkcie zlyhá s chybovou správou \texttt{EEXIST}, ktorá definuje, že \acrshort{ipc} objekt už existuje. Naopak v prípade, že \texttt{IPC\_EXCL} nie je definované tak návratová hodnota je identifikátor už existujúceho \acrshort{ipc} objektu.\cite{msgget}
 
-Na posielanie a prijímanie správ z fronty sa používajú systémové volania \texttt{msgsnd} a \texttt{msgrcv}. Funkcia \texttt{msgsnd} má nasledovné parametre:
+Na posielanie a prijímanie správ z fronty sa používajú systémové volania \texttt{msgsnd} a \texttt{msgrcv}. Funkcia \texttt{msgsnd} má nasledovné parametre\cite{msgop}:
 \begin{itemize}
 \item \texttt{msgid} identifikátor fronty získaný z funkcie \texttt{msgget}
 \item \texttt{msgp} ukazovateľ na štruktúru, ktorú si používateľ definuje sám a mal by vychádzať zo šablóny ktorú sme si popísali v kapitole \ref{lst:msgbuf}
 \item \texttt{msgsz} veľkosť dátovej štruktúry, ktorú chceme prenášať
 \item \texttt{msgflg} príznaky, ktoré definujú čo sa má diať v prípade, že je fronta plná
 \end{itemize}
-Funkcia \texttt{msgrcv}, odstráni správu z frontu a premiestni do pamäte, na ktorý ukazuje parameter funkcie \texttt{msgp}. Ďalšie parametre sú:
+Funkcia \texttt{msgrcv}, odstráni správu z frontu a premiestni do pamäte, na ktorý ukazuje parameter funkcie \texttt{msgp}. Ďalšie parametre sú\cite{msgop}:
 \begin{itemize}
 \item \texttt{msgsz} maximálnu veľkosť dát v bytoch pre položku \texttt{mtext}, štruktúry, na ktorú ukazuje ukazovateľ \texttt{msgp}
 \item \texttt{msgflg} príznaky, ktoré definujú čo sa má diať v prípade, že je fronta prázdna
 \item \texttt{msgtyp} číslo, ktoré definuje ktorý typ správy bude ako prvý vybraný z fronty(nemôže byt definovaný príznak \texttt{MSG\_COPY}), v prípade že je definovaný príznak \texttt{MSG\_EXCEPT}, tak sa z fronty vyberá prvá správa z typom odlišným od \texttt{msgtyp}
 \end{itemize}
-Posledným systémovým volaním tohto mechanizmu je \texttt{msgctl}, ktoré vykonáva kontrolné operácie nad objektom. Funkcia má 3 parametre:
+Posledným systémovým volaním tohto mechanizmu je \texttt{msgctl}, ktoré vykonáva kontrolné operácie nad objektom. Funkcia má 3 parametre\cite{msgctl}:
 \begin{itemize}
 \item \texttt{msgid} identifikátor objektu
 \item \texttt{cmd} typ operácie
 \item \texttt{buf} ide o štruktúru, ktorá sa v jadre ako aj v manuálových stránkach nachádza v 32 bitovej verzií(viď \ref{lst:msqid}), avšak v jadre sa označuje za zastaralú pričom ju nahrádza 64 bitová verzia(viď \ref{lst:msqid64}), táto štruktúra slúži na prenos meta dát z jadra systému do užívateľského priestoru
 \end{itemize}
-Typy operácie nad frontami správ sú nasledovné:
+Typy operácie nad frontami správ sú nasledovné\cite{msgctl}:
 \begin{itemize}
 \item \texttt{IPC\_STAT} a \texttt{MSG\_STAT} kopíruje informácie z jadra do štruktúry na ktorú ukazuje ukazovateľ \texttt{buf}
 \item \texttt{IPC\_SET} nastavuje položky jadra na základe ukazovateľa \texttt{buf}, konkrétne \texttt{msg\_perm.uid}, \texttt{msg\_perm.gid}, \texttt{msg\_qbytes} a posledných 9 bitov \texttt{msg\_perm.mode}
@@ -193,7 +193,7 @@ Semafor ako \acrshort{ipc} mechanizmus nepredstavuje nástoj na prenášanie dá
 
 Semafor \textit{System V} semafory na rozdiel od \acrshort{posix} semaforov nepredstavujú len jedno počítadlo ale skupiny počítadiel. Každé jedno počítadlo môže chrániť nejakú kritickú oblasť a teda jeden \textit{System V} semafor môže chrániť viacero kritických oblastí. Veľkou výhodou je taktiež schopnosť navrátiť operácie vykonané na semafore v prípade, že proces, ktorý bol v kritickej oblasti neočakávane skončí a zabezpečiť tak aby čakajúci proces mohol vstúpiť do kritickej oblasti. 
 
-V nasledujúcich odsekoch si popíšeme interné štruktúry v jadre Linuxu, ktoré zabezpečujú fungovanie semaforov a taktiež aj použitie tohto \acrshort{ipc} mechanizmu.
+V nasledujúcich odsekoch si popíšeme interné štruktúry v jadre Linuxu, ktoré zabezpečujú fungovanie semaforov a taktiež aj použitie tohto \acrshort{ipc} mechanizmu.\cite{linux}
 \subsubsection{Štruktúry semaforov}
 Základná štruktúra, ktorá v sebe nesie hodnotu jedného počítadla má nasledovné položky:
 \begin{itemize}
@@ -225,9 +225,9 @@ Operácie, ktoré sa nad týmito semaformi vykonávajú sú uložené v štrukt�
 \item \texttt{alter} príznak, ktorý označuje či operácia modifikuje pole semaforov
 \item \texttt{dupsop} TODO príznak, ktorý označuje či operácia modifikuje pole semaforov
 \end{itemize}
-Štruktúry na prácu s operáciami, ktoré majú byť v prípade ukončenia programu obnovené do pôvodného stavu sú štruktúry \texttt{sem\_undo} a \texttt{sem\_undo\_list}. Každý proces má jednu prislúchajúcu štruktúru \texttt{sem\_undo} a v prípade že je proces ukončený tak sa tieto operácie vykonajú. Štruktúra \texttt{sem\_undo\_list} zabezpečuje zdieľaný prístup k \texttt{sem\_undo} štruktúram v prípade že viacero procesov zdieľa jeden list čo je možné zabezpečiť pomocou príznaku \texttt{CLONE\_SYSVSEM} pri vytváraní nového procesu.
+Štruktúry na prácu s operáciami, ktoré majú byť v prípade ukončenia programu obnovené do pôvodného stavu sú štruktúry \texttt{sem\_undo} a \texttt{sem\_undo\_list}. Každý proces má jednu prislúchajúcu štruktúru \texttt{sem\_undo} a v prípade že je proces ukončený tak sa tieto operácie vykonajú. Štruktúra \texttt{sem\_undo\_list} zabezpečuje zdieľaný prístup k \texttt{sem\_undo} štruktúram v prípade že viacero procesov zdieľa jeden list čo je možné zabezpečiť pomocou príznaku \texttt{CLONE\_SYSVSEM} pri vytváraní nového procesu.\cite{newlinux}
 \subsubsection{Použitie semaforov} \label{smaforuse}
-\textit{System V} semafor sa vytvára pomocou systémového volania \texttt{semget}, ktoré je analogické k funkcii \texttt{msgget}, ktorú sme si popísali v kapitole \ref{msguse}. JEdiným rozdielom je parameter \textbf{\texttt{nsems}}, ktorý definuje koľko jednotlivých semaforov chceme vytvoriť.
+\textit{System V} semafor sa vytvára pomocou systémového volania \texttt{semget}, ktoré je analogické k funkcii \texttt{msgget}, ktorú sme si popísali v kapitole \ref{msguse}. Jediným rozdielom je parameter \textbf{\texttt{nsems}}, ktorý definuje koľko jednotlivých semaforov chceme vytvoriť.\cite{semget}
 Takto vytvorený semafor je možné používať a vykonávať nad ním operácie pomocou systémového volania \texttt{semop}, ktoré má nasledovné parametre:
 \begin{itemize}
 \item \texttt{semid} identiifkátor semaforu
@@ -240,20 +240,20 @@ Jednotlivé operácie sú definované pomocou štruktúry \texttt{sembuf}, ktor�
 \item \texttt{sem\_op} typ operácie
 \item \texttt{sem\_flg} príznaky operácie
 \end{itemize}
-\texttt{sem\_flg} môže nadobúdať dve hodnoty, ktoré sú \texttt{SEM\_UNDO} a \texttt{IPC\_NOWAIT}. \texttt{SEM\_UNDO} indikuje že chceme aby daná operácia bola obnoviteľná. Príznak \texttt{IPC\_NOWAIT} priamo súvisí s parametrom \texttt{sem\_op}, ktorý môže nadobudnúť tieto stavy:
+\texttt{sem\_flg} môže nadobúdať dve hodnoty, ktoré sú \texttt{SEM\_UNDO} a \texttt{IPC\_NOWAIT}. \texttt{SEM\_UNDO} indikuje že chceme aby daná operácia bola obnoviteľná. Príznak \texttt{IPC\_NOWAIT} priamo súvisí s parametrom \texttt{sem\_op}, ktorý môže nadobudnúť tieto stavy\cite{semop}:
 \begin{itemize}
 \item \texttt{sem\_op} > 0 hodnota \texttt{sem\_op} sa pričíta k hodnota počítadla(vyžaduje sa právo na zápis)
 \item \texttt{sem\_op} == 0 a \texttt{semval} == 0 tak operácia okamžite prebehne, inak ak je definovaný príznak \texttt{IPC\_NOWAIT} operácie skončí s chybou ak však tento príznak nieje definovaný proces čaká pokiaľ bude semafor 0(vyžaduje práva na čítanie semaforu)
 \item \texttt{sem\_op} < 0 a zároveň \texttt{semval} >= \texttt{sem\_op} tak je operácia vykonaná okamžite, inak analogicky k predošlému prípadu operácia skončí buď s chybou alebo proces čaká pokiaľ bude zvýšená hodnota počítadla(vyžaduje sa právo na zápis)
 \end{itemize}
-Posledným systémovým volaním je \texttt{semctl}, ktoré rovnako ako systémové volanie \texttt{msgctl} z kapitoly \ref{msguse} získava alebo zapisuje informácie o \acrshort{ipc} objekte avšak s rozdielom že využíva odlišnú štruktúru na ukladanie dát. \texttt{semctl} má nasledovné argument:
+Posledným systémovým volaním je \texttt{semctl}, ktoré rovnako ako systémové volanie \texttt{msgctl} z kapitoly \ref{msguse} získava alebo zapisuje informácie o \acrshort{ipc} objekte avšak s rozdielom že využíva odlišnú štruktúru na ukladanie dát. \texttt{semctl} má nasledovné argument\cite{semctl}:
 \begin{itemize}
 \item \texttt{semid} identifikátor objektu
 \item \texttt{semnum} index semaforu v skupine semaforov
 \item \texttt{cmd} typ operácie
 \item \texttt{arg} posledný argument je voliteľný podľa typu operácie, ide o union, ktorý je definovaný na ukážke kódu \ref{lst:semun}
 \end{itemize}
-Typy operácii, ktoré sme si definovali pri \texttt{msgctl} taktiež existujú aj pri semafóroch a zachovávajú rovnakú funkcionalitu ale výsledok týchto operácií sa ukladá do položky \texttt{arg.buf}, ktorá je typu \texttt{semid\_ds}(viď \ref{lst:semid}) pre 32 bitové systéme alebo \texttt{semid64\_ds}(viď \ref{lst:semid64}) pre 64 bitové systémy. Toto systémové volanie umožňuje aj semaforovo špecifické operácie, ktoré sú nasledovné:
+Typy operácii, ktoré sme si definovali pri \texttt{msgctl} taktiež existujú aj pri semafóroch a zachovávajú rovnakú funkcionalitu ale výsledok týchto operácií sa ukladá do položky \texttt{arg.buf}, ktorá je typu \texttt{semid\_ds}(viď \ref{lst:semid}) pre 32 bitové systéme alebo \texttt{semid64\_ds}(viď \ref{lst:semid64}) pre 64 bitové systémy. Toto systémové volanie umožňuje aj semaforovo špecifické operácie, ktoré sú nasledovné\cite{semctl}:
 \begin{itemize}
 \item \texttt{GETALL}/\texttt{SETALL} vráti/nastaví hodnotu každého počítadla v skupine semaforov a uloží ho do položky \texttt{arg.array}, parameter \texttt{semnum} je ignorovaný
 \item \texttt{GETNCNT}/\texttt{GETZCNT} vráti počet procesov, ktoré čakajú na zvýšenie(\texttt{GETNCNT}) alebo zníženie(\texttt{GETZCNT}) konkrétneho počítadla, ktoré je definované argumentom \texttt{semnum}
@@ -334,7 +334,6 @@ bind(s, (struct sockaddr *)&local, sizeof(local));
 Prvým parametrom tejto funkcie je deskriptor soketu, druhy parameter je ukazovateľ na štruktúru, typu \texttt{sockaddr}, typ tejto štruktúry sa líši od použitého typu komunikácie, v ukážke kódu \ref{lst:bind} používame štruktúru \texttt{sockaddr\_un}. Tretím parametrom je veľkosť štruktúry. Táto funkcia zabezpečí prepojenie medzi adresou soketu v súborovom systéme a súborovým deskriptorom.
 
 Takto vytvorené sokety je možné použiť dvomi spôsobmi a to buď ako server alebo ako klient. 
-
 Jednoduchý server s použitím soketov môžeme vidieť na ukážke kódu \ref{lst:server}. Na tejto ukážke kódu môžeme vidieť vytvorenie soketu a následne použitie funkcie \texttt{listen}, ktorej prvý parameter je deskriptor soketu a druhý parameter definuje maximálny počet požiadavok, ktoré môžu prísť pokiaľ nebude volaná funkcia \texttt{accept}. 
 
 Funkcia \texttt{accept} je blokovacia funkcia, ktorá blokuje vykonávanie programu\footnote{Ak nie je definovaný príznak \texttt{SOCK\_NONBLOCK}} pokiaľ sa nevytvorí spojenie. Argumenty tejto funkcie sú \texttt{sockfd}, \texttt{addr} a \texttt{addrlen}. \texttt{sockfd} je súborový deskriptor na ktorom akceptuje pripojenie, \texttt{addr} predstavujú štruktúru do ktorej bude uložená adresa klienta, ktorý sa pripojil a \texttt{addrlen} predstavuje veľkosť tejto štruktúry. Návratová hodnota funkcie je nový súborový deskriptor, ktorý bude slúžiť na komunikáciu s pripojeným klientom. 
