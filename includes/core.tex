@@ -353,7 +353,8 @@ Bezpečnostné riešenia, ktoré chcú implementovať nejakú bezpečnostnú pol
 \item 0 udalosť, ktorá nastala, bezpečnostný mechanizmus povoľuje
 \item !0 napríklad \textit{-EPERM} udalosť, ktorá nastala, bezpečnostný mechanizmus zakazuje
 \end{itemize}
- 
+
+Bolo by veľmi obtiažne vytvárať bezpečnostnú politiku, keby si vybrané bezpečnostné riešenie nemohlo ukladať vlastné/interné dáta k prislúchajúcim objektom, ktoré bezpečnostný systém ovplyvňuje. Preto, každá štruktúra, ktorá nejakým spôsobom vystupuje v \acrshort{lsm} funkciách obsahuje položku \texttt{void *security}, táto položka predstavuje ukazovateľ na ľubovoľnú štruktúru, ktorú si definuje bezpečnostné riešenie. Konkrétne bezpečnostné riešenie má za úlohu alokovať pamäť pre túto štruktúra ako aj priradiť hodnotu tejto premennej.
 \subsection{Autorizačný server}
 Autorizačný server je špecifická entita pre bezpečnostné riešenie Medusa a predstavuje rozhodovací prvok. Ide o program, ktorý pracuje v užívateľskom prostredí a prostredníctvom soketu a definovaného komunikačného protokolu \textbf{prijíma}, \textbf{rozhoduje} a \textbf{vracia} odpoveď do jadra systému. Rozhodovanie autorizačného servera je vykonávané na základe konfiguračného súboru, ktorý definuje čo je povolené a čo nie. Výhodou takéhoto oddeleného rozhodovacieho prvku je možnosť použitia jedného autorizačného serveru pre viacero systémov s bezpečnostným systémom Medusa. Momentálne existujú dve implementácie autorizačného serveru:
 \begin{itemize}
@@ -363,7 +364,7 @@ Autorizačný server je špecifická entita pre bezpečnostné riešenie Medusa 
 
 \subsection{Princíp fungovania}
 Úlohou bezpečnostného systému Medusa v procese rozhodovania je zachytiť udalosť, ktorá sa v jadre systému vykonala a následne túto udalosť spracovať a vytvoriť štruktúry, ktoré sú definované v komunikačnom protokole. Pre lepšie pochopenie fungovania systému Medusa je potrebné si popísať dve základné entity, ktoré sú \textbf{\textit{k-objekt}} a \textbf{typy prístupov}.
-\subsubsection{k-objekt}
+\subsubsection{k-objekt} \label{kobjekt}
 \textit{K-objekt} je štruktúra systému Medusa, ktorá v sebe nesie informácie o nejakej internej štruktúre jadra ako napríklad \textit{inode} alebo \textit{process}. Rozlišujeme dva typy štruktúr:
 \begin{itemize}
 \item subjekt - ide o \textit{k-objekt}, ktorý vykonáva nejakú operáciu
@@ -376,12 +377,27 @@ Na definovanie typu sa používajú makrá \textit{MEDUSA\_SUBJECT\_VARS} a \tex
 \item \textbf{\textit{update}} - operácie, pri ktorej je aktualizovaná interná štruktúra jadra dátami \textit{k-objektu}
 \end{itemize}
 Tieto operácie umožňujú autorizačnému serveru meniť stav systému alebo sa informovať o zmene dát v jadre.
-\subsubsection{Typy prístupov}
-\textbf{Typy prístupov} v \textit{Meduse} predstavujú obsluhu pre jednotlivé funkcie \acrshort{lsm} frameworku. \textit{Typ prístupu} definuje subjekt a objekt(\textit{k-objekty}), ktoré vystupujú pri rozhodovaní. Ďalej \textit{typ prístupu} definuje extra dáta, ktoré sa nevzťahujú ani ku subjektu ani ku objektu ale ku konkrétnej udalosti, ktorá sa uskutočnila. A v neposlednom rade \textit{typ prístupu} má za úlohu vytvorenie a konverziu dát jadra na \textit{k-objekt}. 
-
+\subsubsection{Typy prístupov} \label{acctype}
+\textbf{Typy prístupov} v \textit{Meduse} predstavujú obsluhu pre jednotlivé funkcie \acrshort{lsm} frameworku. \textit{Typ prístupu} definuje subjekt a objekt(\textit{k-objekty}), ktoré vystupujú pri rozhodovaní. Na definovanie sa používa makro \texttt{MED\_ACCTYPE}, ktoré môžeme vidieť na ukážke kódu \ref{lst:acctype}. Ďalej \textit{typ prístupu} definuje extra dáta, ktoré sa nevzťahujú ani ku subjektu ani ku objektu ale ku konkrétnej udalosti, ktorá sa uskutočnila. A v neposlednom rade \textit{typ prístupu} má za úlohu vytvorenie a konverziu dát jadra na \textit{k-objekt}.
+\begin{lstlisting}[
+  caption={Bezpečnostná štruktúra Medusy pre IPC},
+  label={lst:securitys},
+  language=c
+]
+MED_ACCTYPE(typ_typu_pristupu, "nazov_typu_pristupu", typ_subjektu, "nazov_subjektu", typ_objektu, "nazov_objektu");
+\end{lstlisting} 
 \textit{Medusa} obsahuje aj špeciálny \textit{typ prístupu}, ktorý sa nazýva \textit{udalosť}. \textit{Udalosti} narozdiel od \textit{typu prístupu} nereagujú na \textit{lsm} framework, ale \textit{udalosť} je volaná interne v rámci \textit{Medusy} a slúži na inicializáciu \textit{k-objektu} v autorizačnom servery.\cite{kacer} \textit{Udalosti} sú volané vždy pred \textit{typom prístupu} aby sa zabezpečilo, že \textit{typ prístupu} bude volaní s validným \textit{k-objektom}.
 
 \textit{Typy prístupov} majú taktiež za úlohu kontrolovať prienik virtuálnych svetov. \textbf{Virtuálne svety} predstavujú skupiny do ktorých je možné zaradovať \textit{k-objekty}. V prípade že sa dva rôzne \textit{k-objekty} nachádzajú v rôznych virtuálnych svetoch je možné automaticky operáciu zamietnuť. Priraďovanie \textit{k-objektov} do virtuálnych svetov sa uskutočňuje na základe konfigurácie. Virtuálne svety taktiež zrýchľujú rozhodovanie nakoľko v prípade rôznych virtuálnych svetov je možné bez zásahu autorizačného serveru rozhodnúť.
+
+\textit{typ prístupu} po konverziách a kontrolách virtuálnych svetov má za úlohu volať funkciu vyššej vrstvy, ktoré sa postará o komunikáciu s autorizačným serverom a rozhodnutie. Na volanie tejto funkcie sa používa makro \texttt{MED\_DECIDE}, ktoré má nasledovné parametre:
+\begin{itemize}
+\item typ štruktúry, ktorá definuje prístupu
+\item ukazovateľ na inštanciu štruktúry, ktorá definuje prístup
+\item ukazovateľ na inštanciu štruktúry, ktorá definuje subjekt
+\item ukazovateľ na inštanciu štruktúry, ktorá definuje objekt
+\end{itemize}
+Návratová hodnota tohto makra je rozhodnutie, ktoré vrátia vyššie vrstvy ide však väčšinou o odpoveď od autorizačného servera.
 \subsection{Architektúra}
 Systém \textit{Medusa} sa skladá z 5 vrstiev a ich funkcie sú nasledovné:
 \begin{itemize}
@@ -397,3 +413,49 @@ Systém \textit{Medusa} sa skladá z 5 vrstiev a ich funkcie sú nasledovné:
   \caption{Schéma komunikačného protokolu\cite{kacer}}
   \label{medusakomunikacia}
 \end{figure}
+
+\section{Implementácia}
+V predchádzajúcich kapitolách sme si popísali entity(štruktúry, funkcie), ktoré je potrebné implementovať v prípade, že chceme rozšíriť bezpečnostné riešenie o ďalší \acrshort{lsm} \textit{hook}. Prvým krokom bolo zadefinovať si \acrshort{lsm} \textit{hook}, ktoré chceme implementovať. Vybrali sme si \acrshort{ipc} mechanizmy semafor, zdieľanú pamäť a fronty správ, ktoré zdieľajú podobnú logiku a ich štruktúry v jadre majú taktiež podobnú kostru. K týmto \acrshort{ipc} mechanizmom prislúchajú \acrshort{lsm} funkcie, ktoré vidíme na ukážke kódu \ref{lst:hook}. 
+\subsection{Bezpečnostná štruktúra}
+Ďalším krokom bolo vytvorenie bezpečnostnej štruktúry, ktorá sa ukladá do položky \texttt{security\_s}, ktorá sa nachádza v štruktúre \texttt{kern\_ipc\_perm}, ktorú sme si popísali v kapitole \ref{kernipcperm}. Nami vytvorenú bezpečnostnú štruktúru môžeme vidieť na ukážke štruktúry \ref{lst:securitys} a  jej definícia sa nachádza v súbore \url{include/linux/medusa/l1/ipc.h}. Táto štruktúra obsahuje položku \texttt{ipc\_class}, ktorá definuje o aký typ \acrshort{ipc} mechanizmu ide. Táto položka môže nadobúdať hodnoty 0, 1 alebo 2, ktoré sú definované makrami v rovnakom súbore. Taktiež sa v tejto štruktúre definujú makrá \texttt{MEDUSA\_SUBJECT\_VARS} a \texttt{MEDUSA\_OBJECT\_VARS} ako pri \texttt{k-objekte}, ktoré sme si popísali v kapitole \ref{kobjekt}. 
+\begin{lstlisting}[
+  caption={Bezpečnostná štruktúra Medusy pre IPC},
+  label={lst:securitys},
+  language=c
+]
+#define MED_IPC_SEM 0
+#define MED_IPC_MSG 1
+#define MED_IPC_SHM 2
+
+struct medusa_l1_ipc_s {
+	unsigned int ipc_class;
+	MEDUSA_SUBJECT_VARS;
+	MEDUSA_OBJECT_VARS;
+};
+\end{lstlisting} 
+Takto zadefinovanú bezpečnostnú štruktúru je potrebné alokovať načo nám slúžia \acrshort{lsm} \textit{hooky} \texttt{*\_alloc\_security} a na uvoľnenie pamäte \texttt{\_free\_security} tieto \textit{hooky} môžeme vidieť v hornej časti výpisu \ref{lst:hook}. Aj keď tieto funkcie majú rôzne parametre, je možné z týchto parametrov získať položku \texttt{kern\_ipc\_perm}, ktorú využívame v pomocnej funkcií \texttt{medusa\_l1\_ipc\_alloc\_security}, ktorej prvý parameter je práve táto štruktúra a druhým parametrom je typ \acrshort{ipc} mechanizmu. Príklad použitie pomocnej funkcie môžete vidieť na ukážke kódu \ref{lst:allocusage}. Avšak táto pomocná funkcia nepokrýva všetky alokácie, nakoľko \acrshort{lsm} framework obsahuje aj funkciu \texttt{msg\_msg\_alloc\_security}, ktorá má argument typu \texttt{msg\_msg}, ktorý neobsahuje štruktúru \texttt{kern\_ipc\_perm} ale bezpečnostná štruktúra sa nachádza priamo v tejto štruktúre teda \texttt{msg\_msg->security}. Na uvoľnenie pamäte je taktiež vytvorená spoločná funkcia, ktorú môžete vidieť na ukážke kódu \ref{lst:free}. Táto funkcia obsluhuje všetky \acrshort{lsm} \textit{hooky} s výnimkou \texttt{medusa\_l1\_msg\_msg\_free\_security}, ktorá má rovnaké obmedzenia, ktoré sme si spomenuli vyššie, ako funkcia na alokovanie.
+\begin{lstlisting}[
+  caption={Príklad použitia pomocnej funkcie na alokovanie bezpečnostnej štruktúry},
+  label={lst:allocusage},
+  language=c
+]
+static int medusa_l1_msg_queue_alloc_security(struct msg_queue *msq)
+{
+	return medusa_l1_ipc_alloc_security(&msq->q_perm, MED_IPC_MSG);
+}
+\end{lstlisting} 
+
+\subsection{Vytvorenie \textit{k-objektu}}
+Pri definovaný \textit{k-objektu} sme narazili na niekoľko obmedzení, ktoré sa vynorili až v neskorších fázach implementácie a preto sa aj definícia \textit{k-objektu} menila v priebehu vývoja. Prvý priamočiary návrh bolo vytvoriť 3 rôzne \textit{k-objekty} pre \acrshort{sem}, \acrshort{shm} a \acrshort{msg}. Toto riešenie však prinášalo so sebou veľké množstvo kódu nakoľko tieto 3 mechanizmy majú dve operácie \texttt{get} a \texttt{ctl}, ktoré pri svojich volaniach vyvolávaj \acrshort{lsm} \textit{hooky}, ktoré majú signatúry, ktoré môžeme vidieť na ukážke kódu \ref{lst:associate}.
+\begin{lstlisting}[
+  caption={Príklad použitia pomocnej funkcie na alokovanie bezpečnostnej štruktúry},
+  label={lst:allocusage},
+  language=c
+]
+//get
+int medusa_l1_[msg_queue/shm/sem]_associate(struct [msg_queue/shmid_kernel/sem_array] *obj, int semflg)
+//ctl
+int medusa_l1_[msg_queue_msg/shm_shm/sem_sem]ctl(struct [msg_queue/shmid_kernel/sem_array] *obj, int cmd)
+\end{lstlisting} 
+Keby sme pre každý mechanizmus vytvorili samostatný \textit{k-objekt} a chceli vytvoriť \textit{typ prístupu}, pre tieto dve spomínané operácie vyžadovalo by si to v konečnom dôsledku 6 rôznych \textit{typov prístupu}, keďže \textit{typ prístupu} je v kóde spätý s typom \textit{k-objektu} ako môžeme vidieť v kapitole \ref{acctype}. 
+Preto tento fakt sme sa rozhodli vytvoriť 4. \textit{k-objekt}, ktorý predstavuje jednotný \textit{k-objekt}, ktorý sa bude využívať pri \textit{typoch prístupu} a teda pre vyššie spomínané operácie budeme definovať len 2 \textit{typy prístupov}. Tento všeobecný 
