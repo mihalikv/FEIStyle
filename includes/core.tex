@@ -426,6 +426,7 @@ V predchádzajúcich kapitolách sme si popísali entity(štruktúry, funkcie), 
 #define MED_IPC_SEM 0
 #define MED_IPC_MSG 1
 #define MED_IPC_SHM 2
+#define MED_IPC_UNDEFINED 3
 
 struct medusa_l1_ipc_s {
 	unsigned int ipc_class;
@@ -448,8 +449,8 @@ static int medusa_l1_msg_queue_alloc_security(struct msg_queue *msq)
 \subsection{Vytvorenie \textit{k-objektu}}
 Pri definovaný \textit{k-objektu} sme narazili na niekoľko obmedzení, ktoré sa vynorili až v neskorších fázach implementácie a preto sa aj definícia \textit{k-objektu} menila v priebehu vývoja. Prvý priamočiary návrh bolo vytvoriť 3 rôzne \textit{k-objekty} pre \acrshort{sem}, \acrshort{shm} a \acrshort{msg}. Toto riešenie však prinášalo so sebou veľké množstvo kódu nakoľko tieto 3 mechanizmy majú dve operácie \texttt{get} a \texttt{ctl}, ktoré pri svojich volaniach vyvolávaj \acrshort{lsm} \textit{hooky}, ktoré majú signatúry, ktoré môžeme vidieť na ukážke kódu \ref{lst:associate}.
 \begin{lstlisting}[
-  caption={Príklad použitia pomocnej funkcie na alokovanie bezpečnostnej štruktúry},
-  label={lst:allocusage},
+  caption={\acrshort{lsm} \textit{hooky} pre operácie \texttt{get} a \texttt{ctl}},
+  label={lst:associate},
   language=c
 ]
 //get
@@ -458,4 +459,26 @@ int medusa_l1_[msg_queue/shm/sem]_associate(struct [msg_queue/shmid_kernel/sem_a
 int medusa_l1_[msg_queue_msg/shm_shm/sem_sem]ctl(struct [msg_queue/shmid_kernel/sem_array] *obj, int cmd)
 \end{lstlisting} 
 Keby sme pre každý mechanizmus vytvorili samostatný \textit{k-objekt} a chceli vytvoriť \textit{typ prístupu}, pre tieto dve spomínané operácie vyžadovalo by si to v konečnom dôsledku 6 rôznych \textit{typov prístupu}, keďže \textit{typ prístupu} je v kóde spätý s typom \textit{k-objektu} ako môžeme vidieť v kapitole \ref{acctype}. 
-Preto tento fakt sme sa rozhodli vytvoriť 4. \textit{k-objekt}, ktorý predstavuje jednotný \textit{k-objekt}, ktorý sa bude využívať pri \textit{typoch prístupu} a teda pre vyššie spomínané operácie budeme definovať len 2 \textit{typy prístupov}. Tento všeobecný 
+Preto tento fakt sme sa rozhodli vytvoriť 4. \textit{k-objekt}, ktorý predstavuje jednotný \textit{k-objekt}, ktorý sa bude využívať pri \textit{typoch prístupu} a teda pre vyššie spomínané operácie budeme definovať len 2 \textit{typy prístupov}. Všeobecný \textit{k-objekt} môžeme vidieť na ukážke kódu \ref{lst:kobjectcommon}. 
+\begin{lstlisting}[
+  caption={Všeobecný \textit{k-objekt}},
+  label={lst:kobjectcommon},
+  language=c
+]
+struct ipc_kobject {	
+	unsigned char data[max_simple(max_simple(sizeof(struct ipc_sem_kobject), sizeof(struct ipc_shm_kobject)), sizeof(struct ipc_msg_kobject))];	
+	MEDUSA_OBJECT_VARS;
+};
+\end{lstlisting} 
+Tento \textit{k-objekt} obsahuje položku \texttt{data}. Ide o bajtové pole, ktoré má z definície veľkosť najväčšieho z konkrétnych \textit{k-objektov}. Definíciu vyššie spomínaného \textit{k-objektu} ako aj definície konkrétnych \textit{k-objektov} je možné nájsť v hlavičkovom súbore \url{security/medusa/l2/kobject_ipc_common.h}. 
+
+Konkrétne \textit{k-objekty}(pre \acrshort{sem}, \acrshort{shm} a \acrshort{msg}) obsahujú nasledovné položky:
+\begin{itemize}
+\item \texttt{ipc\_class} - definuje typ mechanizmu
+\item \texttt{ipc\_perm} - predstavuje internú štruktúru Medusy, \texttt{medusa\_ipc\_perm}, ktorá je definovaná v \url{include/linux/medusa/l1/ipc.h}. Obsahuje jednoduché položky štruktúry \texttt{kern\_ipc\_perm}, ktorá bola popísaná v kapitol \ref{kernipcperm} a v štruktúre je definovaná pomocou makra \texttt{MEDUSA\_IPC\_VARS}.
+\item \texttt{MEDUSA\_OBJECT\_VARS} - makro, ktoré sme si bližšie popísali v kapitole \ref{kobjekt}
+\end{itemize}
+Konkrétne \textit{k-objekty} môžu obsahovať aj špecifické údaje pre konkrétny mechanizmus, napríklad \textit{k-objekt} \texttt{ipc\_sem\_kobject} obsahuje položku \texttt{sem\_nsems}, v ktoré je uchovaný počet počítadiel v skupine semaforu.
+Takto vytvoreným \textit{k-objektom} je potrebné definovať konverzné funkcie medzi štruktúrou jadra, v našom prípade ide o štruktúry \texttt{msg\_queue}, \texttt{sem\_array} a \texttt{shmid\_kernel} na štruktúry Medusy, ktoré sú \texttt{ipc\_msg\_kobject}, \texttt{ipc\_sem\_kobject} a \texttt{ipc\_shm\_kobject}
+
+
