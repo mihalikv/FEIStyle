@@ -378,7 +378,12 @@ Na definovanie typu sa používajú makrá \textit{MEDUSA\_SUBJECT\_VARS} a \tex
 \end{itemize}
 Tieto operácie umožňujú autorizačnému serveru meniť stav systému alebo sa informovať o zmene dát v jadre.
 \subsubsection{Typy prístupov} \label{acctype}
-\textbf{Typy prístupov} v \textit{Meduse} predstavujú obsluhu pre jednotlivé funkcie \acrshort{lsm} frameworku. \textit{Typ prístupu} definuje subjekt a objekt(\textit{k-objekty}), ktoré vystupujú pri rozhodovaní. Na definovanie sa používa makro \texttt{MED\_ACCTYPE}, ktoré môžeme vidieť na ukážke kódu \ref{lst:acctype}. Ďalej \textit{typ prístupu} definuje extra dáta, ktoré sa nevzťahujú ani ku subjektu ani ku objektu ale ku konkrétnej udalosti, ktorá sa uskutočnila. A v neposlednom rade \textit{typ prístupu} má za úlohu vytvorenie a konverziu dát jadra na \textit{k-objekt}.
+\textbf{Typy prístupov} v \textit{Meduse} predstavujú obsluhu pre jednotlivé funkcie \acrshort{lsm} frameworku. \textit{Typ prístupu} definuje subjekt a objekt(\textit{k-objekty}), ktoré vystupujú pri rozhodovaní. Na definovanie sa používa makro \texttt{MED\_ACCTYPE}, ktoré môžeme vidieť na ukážke kódu \ref{lst:acctype}. Ďalej \textit{typ prístupu} definuje extra dáta, ktoré sa nevzťahujú ani ku subjektu ani ku objektu ale ku konkrétnej udalosti, ktorá sa uskutočnila. A v neposlednom rade \textit{typ prístupu} má za úlohu vytvorenie a konverziu dát jadra na \textit{k-objekt} a naspäť. Konverzia dát nastáva pri nasledovných udalostiach:
+\begin{itemize}
+\item vyvolá sa \acrshort{lsm} \textit{hook} a Medusa potrebuje komunikovať s autorizačným serverom(štruktúra jadra -> \textit{k-objekt})
+\item nastane udalosť \textit{update}, ktorú vyvolal autorizačný server(\textit{k-objekt} -> štruktúra jadra)
+\item nastane udalosť \textit{fetch}, ktorú vyvolal autorizačný server(štruktúra jadra -> \textit{k-objekt})
+\end{itemize}
 \begin{lstlisting}[
   caption={Bezpečnostná štruktúra Medusy pre IPC},
   label={lst:securitys},
@@ -416,7 +421,7 @@ Systém \textit{Medusa} sa skladá z 5 vrstiev a ich funkcie sú nasledovné:
 
 \section{Implementácia}
 V predchádzajúcich kapitolách sme si popísali entity(štruktúry, funkcie), ktoré je potrebné implementovať v prípade, že chceme rozšíriť bezpečnostné riešenie o ďalší \acrshort{lsm} \textit{hook}. Prvým krokom bolo zadefinovať si \acrshort{lsm} \textit{hook}, ktoré chceme implementovať. Vybrali sme si \acrshort{ipc} mechanizmy semafor, zdieľanú pamäť a fronty správ, ktoré zdieľajú podobnú logiku a ich štruktúry v jadre majú taktiež podobnú kostru. K týmto \acrshort{ipc} mechanizmom prislúchajú \acrshort{lsm} funkcie, ktoré vidíme na ukážke kódu \ref{lst:hook}. 
-\subsection{Bezpečnostná štruktúra}
+\subsection{Bezpečnostná štruktúra} \label{securitys}
 Ďalším krokom bolo vytvorenie bezpečnostnej štruktúry, ktorá sa ukladá do položky \texttt{security\_s}, ktorá sa nachádza v štruktúre \texttt{kern\_ipc\_perm}, ktorú sme si popísali v kapitole \ref{kernipcperm}. Nami vytvorenú bezpečnostnú štruktúru môžeme vidieť na ukážke štruktúry \ref{lst:securitys} a  jej definícia sa nachádza v súbore \url{include/linux/medusa/l1/ipc.h}. Táto štruktúra obsahuje položku \texttt{ipc\_class}, ktorá definuje o aký typ \acrshort{ipc} mechanizmu ide. Táto položka môže nadobúdať hodnoty 0, 1 alebo 2, ktoré sú definované makrami v rovnakom súbore. Taktiež sa v tejto štruktúre definujú makrá \texttt{MEDUSA\_SUBJECT\_VARS} a \texttt{MEDUSA\_OBJECT\_VARS} ako pri \texttt{k-objekte}, ktoré sme si popísali v kapitole \ref{kobjekt}. 
 \begin{lstlisting}[
   caption={Bezpečnostná štruktúra Medusy pre IPC},
@@ -434,6 +439,7 @@ struct medusa_l1_ipc_s {
 	MEDUSA_OBJECT_VARS;
 };
 \end{lstlisting} 
+
 Takto zadefinovanú bezpečnostnú štruktúru je potrebné alokovať načo nám slúžia \acrshort{lsm} \textit{hooky} \texttt{*\_alloc\_security} a na uvoľnenie pamäte \texttt{\_free\_security} tieto \textit{hooky} môžeme vidieť v hornej časti výpisu \ref{lst:hook}. Aj keď tieto funkcie majú rôzne parametre, je možné z týchto parametrov získať položku \texttt{kern\_ipc\_perm}, ktorú využívame v pomocnej funkcií \texttt{medusa\_l1\_ipc\_alloc\_security}, ktorej prvý parameter je práve táto štruktúra a druhým parametrom je typ \acrshort{ipc} mechanizmu. Príklad použitie pomocnej funkcie môžete vidieť na ukážke kódu \ref{lst:allocusage}. Avšak táto pomocná funkcia nepokrýva všetky alokácie, nakoľko \acrshort{lsm} framework obsahuje aj funkciu \texttt{msg\_msg\_alloc\_security}, ktorá má argument typu \texttt{msg\_msg}, ktorý neobsahuje štruktúru \texttt{kern\_ipc\_perm} ale bezpečnostná štruktúra sa nachádza priamo v tejto štruktúre teda \texttt{msg\_msg->security}. Na uvoľnenie pamäte je taktiež vytvorená spoločná funkcia, ktorú môžete vidieť na ukážke kódu \ref{lst:free}. Táto funkcia obsluhuje všetky \acrshort{lsm} \textit{hooky} s výnimkou \texttt{medusa\_l1\_msg\_msg\_free\_security}, ktorá má rovnaké obmedzenia, ktoré sme si spomenuli vyššie, ako funkcia na alokovanie.
 \begin{lstlisting}[
   caption={Príklad použitia pomocnej funkcie na alokovanie bezpečnostnej štruktúry},
@@ -446,7 +452,7 @@ static int medusa_l1_msg_queue_alloc_security(struct msg_queue *msq)
 }
 \end{lstlisting} 
 
-\subsection{Vytvorenie \textit{k-objektu}}
+\subsection{Vytvorenie \textit{k-objektu}} \label{kobjectimpl}
 Pri definovaný \textit{k-objektu} sme narazili na niekoľko obmedzení, ktoré sa vynorili až v neskorších fázach implementácie a preto sa aj definícia \textit{k-objektu} menila v priebehu vývoja. Prvý priamočiary návrh bolo vytvoriť 3 rôzne \textit{k-objekty} pre \acrshort{sem}, \acrshort{shm} a \acrshort{msg}. Toto riešenie však prinášalo so sebou veľké množstvo kódu nakoľko tieto 3 mechanizmy majú dve operácie \texttt{get} a \texttt{ctl}, ktoré pri svojich volaniach vyvolávaj \acrshort{lsm} \textit{hooky}, ktoré majú signatúry, ktoré môžeme vidieť na ukážke kódu \ref{lst:associate}.
 \begin{lstlisting}[
   caption={\acrshort{lsm} \textit{hooky} pre operácie \texttt{get} a \texttt{ctl}},
@@ -459,7 +465,7 @@ int medusa_l1_[msg_queue/shm/sem]_associate(struct [msg_queue/shmid_kernel/sem_a
 int medusa_l1_[msg_queue_msg/shm_shm/sem_sem]ctl(struct [msg_queue/shmid_kernel/sem_array] *obj, int cmd)
 \end{lstlisting} 
 Keby sme pre každý mechanizmus vytvorili samostatný \textit{k-objekt} a chceli vytvoriť \textit{typ prístupu}, pre tieto dve spomínané operácie vyžadovalo by si to v konečnom dôsledku 6 rôznych \textit{typov prístupu}, keďže \textit{typ prístupu} je v kóde spätý s typom \textit{k-objektu} ako môžeme vidieť v kapitole \ref{acctype}. 
-Preto tento fakt sme sa rozhodli vytvoriť 4. \textit{k-objekt}, ktorý predstavuje jednotný \textit{k-objekt}, ktorý sa bude využívať pri \textit{typoch prístupu} a teda pre vyššie spomínané operácie budeme definovať len 2 \textit{typy prístupov}. Všeobecný \textit{k-objekt} môžeme vidieť na ukážke kódu \ref{lst:kobjectcommon}. 
+Pre tento fakt sme sa rozhodli vytvoriť 4. \textit{k-objekt}, ktorý predstavuje jednotný \textit{k-objekt}, ktorý sa bude využívať pri \textit{typoch prístupu} a teda pre vyššie spomínané operácie budeme definovať len 2 \textit{typy prístupov}. Všeobecný \textit{k-objekt} môžeme vidieť na ukážke kódu \ref{lst:kobjectcommon}. 
 \begin{lstlisting}[
   caption={Všeobecný \textit{k-objekt}},
   label={lst:kobjectcommon},
@@ -479,6 +485,137 @@ Konkrétne \textit{k-objekty}(pre \acrshort{sem}, \acrshort{shm} a \acrshort{msg
 \item \texttt{MEDUSA\_OBJECT\_VARS} - makro, ktoré sme si bližšie popísali v kapitole \ref{kobjekt}
 \end{itemize}
 Konkrétne \textit{k-objekty} môžu obsahovať aj špecifické údaje pre konkrétny mechanizmus, napríklad \textit{k-objekt} \texttt{ipc\_sem\_kobject} obsahuje položku \texttt{sem\_nsems}, v ktoré je uchovaný počet počítadiel v skupine semaforu.
-Takto vytvoreným \textit{k-objektom} je potrebné definovať konverzné funkcie medzi štruktúrou jadra, v našom prípade ide o štruktúry \texttt{msg\_queue}, \texttt{sem\_array} a \texttt{shmid\_kernel} na štruktúry Medusy, ktoré sú \texttt{ipc\_msg\_kobject}, \texttt{ipc\_sem\_kobject} a \texttt{ipc\_shm\_kobject}
+\subsubsection{Konverzné funkcie} \label{converse}
+Takto vytvoreným \textit{k-objektom} je potrebné definovať konverzné funkcie medzi štruktúrou jadra, v našom prípade ide o štruktúry \texttt{msg\_queue}, \texttt{sem\_array} a \texttt{shmid\_kernel} na štruktúry Medusy, ktoré sú \texttt{ipc\_msg\_kobject}, \texttt{ipc\_sem\_kobject} a \texttt{ipc\_shm\_kobject}. Avšak medzi \acrshort{lsm} funkciami sa nachádza aj \texttt{ipc\_permission}, ktorej signatúru môžeme vidieť na ukážke kódu \ref{lst:ipcpermission}.
+\begin{lstlisting}[
+  caption={Signatúra obslužnej funkcie pre \acrshort{lsm} \textit{hook} \texttt{ipc\_permission}},
+  label={lst:ipcpermission},
+  language=c
+]
+static int medusa_l1_ipc_permission(struct kern_ipc_perm *ipcp, short flag)
+\end{lstlisting}
+Ako môžeme vidieť táto funkcia obsahuje argument \texttt{kern\_ipc\_perm}, ktorý nepredstavuje konkrétnu štruktúru nejakého z mechanizmov ale ide len o podštruktúru. Na základe tohto faktu sme sa preto rozhodli pri konverzných funkciách na vstupe pracovať z touto štruktúrou a zabezpečiť tým kompatibilitu aj pre tento špecificky \acrshort{lsm} \textit{hook}. \textit{K-objekty} pre \acrshort{sem}, \acrshort{shm} a \acrshort{msg} obsahujú vlastné konverzné funkcie v súbore \textit{k-objektu}, teda pre semafor sa nachádzajú tieto funkcie v súbore \url{security/medusa/l2/kobject_ipc_sem.c}. Tieto funkcie majú nasledovné názvy:
+\begin{itemize}
+\item \texttt{ipc\_[typ]\_kern2kobj} - konverzná funkcia zo štruktúry jadra na štruktúru Medusy
+\item \texttt{ipc\_[typ]\_kobj2kern} - konverzná funkcia zo štruktúry Medusy na štruktúru jadra
+\end{itemize}
+Pričom \texttt{[typ]} môže byť \texttt{sem}, \texttt{shm} alebo \texttt{msg}. Tieto funkcie sa pre každý mechanizmus líšia hlavne v položkách, ktoré sa kopírujú preto si princíp ukážeme len na semaforoch. Na ukážke kódu \ref{lst:ipcsemkern2kobj} môžeme vidieť konkrétnu implementáciu. 
+\lstdefinestyle{nm}{basicstyle=\scriptsize\ttfamily,numbers=left,stepnumber=1}
+\begin{lstlisting}[
+  caption={Konverzná funkcia zo štruktúry jadra na štruktúru Medusy pre \acrshort{sem}},
+  label={lst:ipcsemkern2kobj},
+  language=c,
+  style=nm
+]
+static struct ipc_sem_kobject storage;
+
+void * ipc_sem_kern2kobj(struct kern_ipc_perm * ipcp)
+{
+	struct medusa_l1_ipc_s* security_s;
+	struct sem_array * sem_array;
+
+	security_s = (struct medusa_l1_ipc_s*) ipcp->security;
+	sem_array = container_of(ipcp, struct sem_array, sem_perm);
+	
+	memset(&storage, '\0', sizeof(struct ipc_sem_kobject));
+	
+	if(!security_s)
+		return NULL;
+	
+	storage.ipc_class = security_s->ipc_class;
+	storage.sem_nsems = sem_array->sem_nsems;
+	
+	COPY_WRITE_IPC_VARS(&(storage.ipc_perm), ipcp);
+	COPY_READ_IPC_VARS(&(storage.ipc_perm), ipcp);
+	COPY_MEDUSA_OBJECT_VARS(&storage, security_s);
+	return (void *)&storage;
+}
+\end{lstlisting}
+
+Na začiatku si deklarujeme pomocné premenné, ktoré následne inicializujeme. Prvou pomocnou premennou je bezpečnostná štruktúra, ktorú sme si popísali v kapitole \ref{securitys} a druhou premennou je štruktúra, ktorá je hlavnou štruktúrou pre konkrétny \acrshort{ipc} mechanizmus. Dôležitým makrom, ktoré sa tu používa je makro \texttt{container\_of}. Toto makro na základe ukazovateľa \texttt{ptr} na nejakú položku \texttt{member} dokáže vrátiť adresu na kontajner, ktorý má typ \texttt{type}. Princíp fungovania môžme vidieť aj na obrázku \ref{containerof}.
+\begin{figure}[!htbp]
+  \centering
+  \includegraphics[width=5cm]{img/container_of.png}
+  \caption{Princíp fungovania \textit{container\_of} makra \cite{containerof}}
+  \label{containerof}
+\end{figure}
+Pomocou tohto makra dokážeme získať hlavnú štruktúru \acrshort{ipc} mechanizmu len za pomoci štruktúry \texttt{kern\_ipc\_perm}. Ďalším krokom je vynulovanie pamäte premennej \texttt{storage}. Táto premenná slúži na uloženie \textit{k-objektu} v pamäti, pokým sa nepošle autorizačnému serveru. Na ďalšom riadku sa nachádza kontrola bezpečnostnej štruktúry, ktorá by nemala byť \texttt{NULL}, ak však takýto prípad nastane tak funkcia vráti \texttt{NULL} a vyššie funkcie ktoré túto konverziu používajú musia túto možnosť ďalej ošetriť. Na riadku 16 a 17 sa do \textit{k-objektu} prenesú údaje o type mechanizmu a špecifická vlastnosť \acrshort{sem}, ktorou je počet semaforov. Na riadkoch 19 a 20 sú použité pomocné makrá, ktoré sme si vytvorili len pre potreby \acrshort{ipc} a slúžia na prekopírovanie položiek štruktúry \texttt{kern\_ipc\_perm}, ktoré sa v \textit{k-objekte} nachádzajú v položke \texttt{ipc\_perm}, ktorú sme si popísali vyššie v tejto kapitole. Implementácia týchto dvoch makier sa nachádza v hlavičkovom súbore \url{include/linux/medusa/l1/ipc.h}. Makro \texttt{COPY\_READ\_IPC\_VARS} kopíruje položky, ktoré je možné len čítať a makro \texttt{COPY\_WRITE\_IPC\_VARS} kopíruje položky, ktoré je možné čítať aj prepisovať v štruktúre jadra. Posledným makrom, ktoré sa pri konverzii používa je makro \texttt{COPY\_MEDUSA\_OBJECT\_VARS}, ktoré kopíruje interné položky definované pre \textit{objekt} z bezpečnostnej štruktúry do \textit{k-objektu}. Návratová hodnota tejto funkcie je \texttt{void} ukazovateľ na úložisko kde máme nový \textit{k-objekt}.
+
+\begin{lstlisting}[
+  caption={Konverzná funkcia zo štruktúry Medusy na štruktúru jadra pre \acrshort{sem}},
+  label={lst:ipckobj2kern},
+  language=c
+]
+medusa_answer_t ipc_sem_kobj2kern(struct medusa_kobject_s * ipck, struct kern_ipc_perm * ipcp)
+{
+	struct medusa_l1_ipc_s* security_s;
+	struct ipc_sem_kobject * ipck_sem;
+
+	ipck_sem = (struct ipc_sem_kobject *)ipck;
+	security_s = (struct medusa_l1_ipc_s*) ipcp->security;
+
+	COPY_WRITE_IPC_VARS(ipcp, &ipck_sem->ipc_perm);
+	COPY_MEDUSA_OBJECT_VARS(security_s, ipck_sem);
+	MED_MAGIC_VALIDATE(security_s);
+	return MED_OK;
+}
+\end{lstlisting}
+
+Na ukážke kódu \ref{lst:ipckobj2kern} môžeme vidieť funkciu s opačnou funkcionalitou a teda konverziu z \textit{k-objektu} na štruktúru jadra. Prí takejto konverzii je potrebné si uvedomiť, ktoré položky štruktúry je možné v jadre systému upravovať. Pri \acrshort{ipc} mechanizmoch sme sa inšpirovali operáciou \textit{ctl}, ktorá taktiež má schopnosť meniť štruktúru jadra a práve táto operácie dokáže priamo aktualizovať nasledovné položky \texttt{uid}, \texttt{gid} a \texttt{mode}. Preto aj táto konverzná funkcia môže meniť len tieto tri položky a nemôže meniť napríklad pri semaforoch položku \texttt{sem\_nsems}, čo by mohlo spôsobiť nedefinované správanie. Na zmenu údajov v jadre používame vyššie spomínané makrá pričom na konci vykonávanie funkcie je použité makro \texttt{MED\_MAGIC\_VALIDATE}, ktorého úlohou je nastaviť internú položku Medusy, ktorá indikuje že objekt je už zaregistrovaný v autorizačnom servery. Návratovou hodnotou tejto funkcie je status \texttt{MED\_OK}, ktorý indikuje úspešnú aktualizáciu.
+
+Tieto konverzné funkcie pre \acrshort{sem}, \acrshort{shm} a \acrshort{msg} nie je možné priamo použiť v \textit{type prístupu}, nakoľko ako sme písali v kapitole \ref{kobjectimpl} vytvorili sme 4. všeobecný \textit{k-objekt}. Kvôli tomuto faktu je vytvorená funkcia \texttt{ipc\_kern2kobj}, ktorú môžeme vidieť na ukážke kódu \ref{lst:ipckern2kobj}. Táto funkcia na základe typu \acrshort{ipc} mechanizmu, ktorý získa z  bezpečnostnej štruktúry, rozhodne ktorú konkrétnu funkciu zavolať. Následne skopíruje pamäťovú oblasť kde je uložený \textit{k-objekt} do položky \texttt{data} štruktúry \texttt{ipc\_kobject}. Návratová hodnota funkcie je 0 v prípade úspešnej konverzie v opačnom prípade -1.
+\begin{lstlisting}[
+  caption={Konverzná funkcia zo štruktúry Medusy na štruktúru jadra},
+  label={lst:ipckern2kobj},
+  language=c
+]
+int ipc_kern2kobj(struct ipc_kobject * ipck, struct kern_ipc_perm * ipcp)
+{
+	struct medusa_l1_ipc_s* security_s;
+	unsigned int ipc_class;
+
+	security_s = ipc_security(ipcp);
+	ipc_class = security_s->ipc_class;
+	switch(ipc_class){
+		case MED_IPC_SEM: {
+			struct ipc_sem_kobject *new_kobj;
+			new_kobj = (struct ipc_sem_kobject *)ipc_sem_kern2kobj(ipcp);
+			memcpy(ipck->data, (unsigned char *)new_kobj, sizeof(struct ipc_sem_kobject));
+			break;
+		}
+		...
+		default:
+			printk("Unkown ipc_class\n");
+			return -1;		
+	}
+	return 0;
+}
+\end{lstlisting}
+\subsubsection{Operácie \textit{fetch} a \textit{update}} \label{ops}
+Pre plnohodnotnú funkcionalitu bolo potrebné definovať operácie \textit{fetch} a \textit{update}, ktoré sme si vysvetlili v kapitole \ref{kobjekt}. Tieto operácie sa definujú \textit{k-objektom} konkrétnych mechanizmov, pričom všeobecný \textit{k-objekt} \texttt{ipc\_kobject} tieto operácie nedefinuje čo treba zohľadniť pri konfigurácii autorizačného servera. Na ukážke kódu \ref{lst:semfetch} vidíme operáciu \texttt{fetch} \textit{k-objektu} semaforu, ktorá v svojom tele volá funkciu \texttt{ipc\_fetch}. Funkcia \texttt{ipc\_fetch} je spoločná pre všetky 3 \acrshort{ipc} \textit{k-objekty} a jej kód môžeme vidieť na ukážke kódu \ref{lst:fetch}. V tejto spoločnej funkcii sa vykonávajú nasledovné operácie:
+\begin{itemize}
+\item získanie štruktúry \texttt{ipc\_ids} podľa typu \acrshort{ipc} mechanizmu
+\item získanie štruktúry \texttt{kern\_ipc\_perm} na základe identifikátora \acrshort{ipc} mechanizmu
+\item konverzia štruktúr pomocou funkcii, ktoré sme si popísali v kapitole \ref{converse}
+\item vrátenie nového \textit{k-objektu}
+\end{itemize}
+\begin{lstlisting}[
+  caption={Operácie \texttt{fetch} pre \textit{k-objekt} semaforu},
+  label={lst:semfetch},
+  language=c
+]
+static struct medusa_kobject_s * ipc_sem_fetch(struct medusa_kobject_s * kobj)
+{
+	struct ipc_sem_kobject * ipc_kobj;
+	struct medusa_kobject_s * new_kobj;
+	ipc_kobj = (struct ipc_sem_kobject *)kobj;
+	new_kobj = (struct medusa_kobject_s *)ipc_fetch(ipc_kobj->ipc_perm.id, ipc_kobj->ipc_class, ipc_sem_kern2kobj);
+	return new_kobj;
+}
+\end{lstlisting}
+Operácia \textit{update} funguje na rovnakom princípe ale odlišuje sa hlavne v uzamykacích mechanizmoch, ktoré sme tu museli použiť, nakoľko narozdiel od operácie \textit{fetch}, táto operácie mení dáta v štruktúrach jadra a preto je potrebné pomocou rôznych zámkov zabezpečiť zachovanie integrity údajov. Funkciu \texttt{ipc_update} môžeme vidieť na ukážke kódu \ref{lst:update}. 
 
 
+
+
+\subsection{Typy prístupov}
