@@ -592,13 +592,7 @@ int ipc_kern2kobj(struct ipc_kobject * ipck, struct kern_ipc_perm * ipcp)
 }
 \end{lstlisting}
 \subsubsection{Operácie \textit{fetch} a \textit{update}} \label{ops}
-Pre plnohodnotnú funkcionalitu bolo potrebné definovať operácie \textit{fetch} a \textit{update}, ktoré sme si vysvetlili v kapitole \ref{kobjekt}. Tieto operácie sa definujú \textit{k-objektom} konkrétnych mechanizmov, pričom všeobecný \textit{k-objekt} \texttt{ipc\_kobject} tieto operácie nedefinuje čo treba zohľadniť pri konfigurácii autorizačného servera. Na ukážke kódu \ref{lst:semfetch} vidíme operáciu \texttt{fetch} \textit{k-objektu} semaforu, ktorá v svojom tele volá funkciu \texttt{ipc\_fetch}. Funkcia \texttt{ipc\_fetch} je spoločná pre všetky 3 \acrshort{ipc} \textit{k-objekty} a jej kód môžeme vidieť na ukážke kódu \ref{lst:fetch}. V tejto spoločnej funkcii sa vykonávajú nasledovné operácie:
-\begin{itemize}
-\item získanie štruktúry \texttt{ipc\_ids} podľa typu \acrshort{ipc} mechanizmu
-\item získanie štruktúry \texttt{kern\_ipc\_perm} na základe identifikátora \acrshort{ipc} mechanizmu
-\item konverzia štruktúr pomocou funkcii, ktoré sme si popísali v kapitole \ref{converse}
-\item vrátenie nového \textit{k-objektu}
-\end{itemize}
+Pre plnohodnotnú funkcionalitu bolo potrebné definovať operácie \textit{fetch} a \textit{update}, ktoré sme si vysvetlili v kapitole \ref{kobjekt}. Tieto operácie sa definujú \textit{k-objektom} konkrétnych mechanizmov, pričom všeobecný \textit{k-objekt} \texttt{ipc\_kobject} tieto operácie nedefinuje čo treba zohľadniť pri konfigurácii autorizačného servera. 
 \begin{lstlisting}[
   caption={Operácie \texttt{fetch} pre \textit{k-objekt} semaforu},
   label={lst:semfetch},
@@ -613,9 +607,76 @@ static struct medusa_kobject_s * ipc_sem_fetch(struct medusa_kobject_s * kobj)
 	return new_kobj;
 }
 \end{lstlisting}
-Operácia \textit{update} funguje na rovnakom princípe ale odlišuje sa hlavne v uzamykacích mechanizmoch, ktoré sme tu museli použiť, nakoľko narozdiel od operácie \textit{fetch}, táto operácie mení dáta v štruktúrach jadra a preto je potrebné pomocou rôznych zámkov zabezpečiť zachovanie integrity údajov. Funkciu \texttt{ipc_update} môžeme vidieť na ukážke kódu \ref{lst:update}. 
-
-
-
-
+Na ukážke kódu \ref{lst:semfetch} vidíme operáciu \texttt{fetch} \textit{k-objektu} semaforu, ktorá v svojom tele volá funkciu \texttt{ipc\_fetch}. Funkcia \texttt{ipc\_fetch} je spoločná pre všetky 3 \acrshort{ipc} \textit{k-objekty} a jej kód môžeme vidieť na ukážke kódu \ref{lst:fetch}. V tejto spoločnej funkcii sa vykonávajú nasledovné operácie:
+\begin{itemize}
+\item získanie štruktúry \texttt{ipc\_ids} podľa typu \acrshort{ipc} mechanizmu
+\item získanie štruktúry \texttt{kern\_ipc\_perm} na základe identifikátora \acrshort{ipc} mechanizmu
+\item konverzia štruktúr pomocou funkcii, ktoré sme si popísali v kapitole \ref{converse}
+\item vrátenie nového \textit{k-objektu}
+\end{itemize}
+\begin{lstlisting}[
+  caption={Operácie \texttt{update} pre \textit{k-objekt} semaforu},
+  label={lst:semupdate},
+  language=c
+]
+static medusa_answer_t ipc_sem_update(struct medusa_kobject_s * kobj)
+{
+	struct ipc_sem_kobject * ipc_kobj;
+	medusa_answer_t answer;
+	ipc_kobj = (struct ipc_sem_kobject *)kobj;
+	answer = ipc_update(ipc_kobj->ipc_perm.id, ipc_kobj->ipc_class, kobj, ipc_sem_kobj2kern);
+	return answer;
+}
+\end{lstlisting}
+Operácia \textit{update} funguje na rovnakom princípe ale odlišuje sa hlavne v uzamykacích mechanizmoch, ktoré sme tu museli použiť, nakoľko narozdiel od operácie \textit{fetch}, táto operácie mení dáta v štruktúrach jadra a preto je potrebné pomocou rôznych zámkov zabezpečiť zachovanie integrity údajov. Funkciu \texttt{ipc\_update} môžeme vidieť na ukážke kódu \ref{lst:update} a jej použitie na ukážke kódu \ref{lst:semupdate}. Pri \acrshort{ipc} je možné použiť niekoľko druhou zámkou avšak operácie ktoré pod týmito známkami vykonávame sú presne definované a sú nasledovné
+\begin{itemize}
+\item \texttt{rcu\_read\_lock}/\texttt{rcu\_read\_unlock}
+\begin{itemize}
+\item počiatočné kontroly (povolenia, audity, ...)
+\item len čítacie operácie, ktoré nevyžadujú atomicitu 
+\end{itemize}
+\item \texttt{ipc\_lock\_object}/\texttt{ipc\_unlock\_object}
+\begin{itemize}
+\item čítacie operácie, ktoré vyžadujú atomicitu 
+\item aktualizácie údajov, ako napríklad \texttt{SET}, \texttt{RMID} príkazy a operácie špecifické pre mechanizmy
+\end{itemize}
+\item \texttt{ids->rwsem}
+\begin{itemize}
+\item vytváranie, odstraňovanie a iterácia cez existujúce objekty v \acrshort{ipc} skupine
+\item iterovanie cez súbory na ceste \url{/proc/sysvipc/}
+\end{itemize}
+\end{itemize}
+Jadro systému Linux taktiež obsahuje aj operácie na zvýšenie(\texttt{ipc\_rcu\_getref}) a na zníženie(\texttt{ipc\_put\_getref}) počítadla referencii, ktoré zabraňuje tomu aby bol \acrshort{ipc} objekt odstránený a zároveň používaný nejakým procesom. Na základe týchto poznatkov sme v operácii \textit{fetch} použili len \acrshort{rcu} uzamykací mechanizmus keďže vykonávame len čítacie operácie a pri operácií \textit{update} používame systém \acrshort{rcu} spoločne s funkciou \texttt{ipc\_lock\_object} nakoľko vykonávame aj zapisovanie do štruktúr jadra. Aby sme predišli nechcenému odstráneniu objektu zo systému, tak po získaní štruktúry taktiež zvyšujeme aj referenciu na tento objekt. Keďže pri operácii \textit{update} nevytvárame, nemažeme ani neprechádzame objekty \acrshort{ipc}, nebolo potrebné použiť zámok \texttt{ids->rwsem}.
 \subsection{Typy prístupov}
+Po tom ako sme si vytvorili potrebné \textit{k-objekty}, bolo potrebné zadefinovať \textit{typy prístupov}. Definícia \textit{typu prístupu} priamo nadväzuje na \acrshort{lsm} \textit{hook} avšak snažili sme sa \acrshort{lsm} \textit{hooky}, ktoré sú podobné zlúčiť pod jeden \textit{typ prístupu}. Výsledkom sú nasledovné \textit{typy prístupov}:
+\begin{itemize}
+\item \texttt{ipc\_ctl} - združuje \textit{hooky} pre operáciu \texttt{ctl}
+\item \texttt{ipc\_associate} - združuje \textit{hooky} pre operáciu \texttt{get}
+\item \texttt{ipc\_msgrcv}
+\item \texttt{ipc\_msgsnd}
+\item \texttt{ipc\_permission}
+\item \texttt{ipc\_semop}
+\item \texttt{ipc\_shmat}
+\end{itemize} 
+Každý z týchto \textit{typov prístupu} má definovaný \textit{object}, ktorým je aktuálny proces, ktorý získavame pomocou makra \texttt{current} a \textit{subjektom} je \acrshort{ipc} entita, ktorá je typu \texttt{ipc\_kobject}. Taktiež každý \textit{typ prístupu} obsahuje extra položku \texttt{ipc\_class} aby bolo možné na strane autorizačného servera skonvertovať všeobecný \textit{k-objekt} na konkrétny \textit{k-objekt}. Rozdielom medzi týmito \textit{typmi prístupov} sú extra dáta, ktoré sa pridávajú k \textit{typu prístupu}, napríklad pre \texttt{ipc\_semop} sú to položky \texttt{sem\_op}, \texttt{sem\_num}, \texttt{sem\_flg}, \texttt{alter}, ktoré definujú ako a nad čím sa má operácia vykonať. Pre jednotlivé \textit{typy prístupov} je možné tieto položky nájsť v definícii štruktúry \textit{typu prístupu} na začiatku súboru, ako môžeme vidieť na ukážke kódu \ref{lst:acctype}. Ďalej sa v tomto súbore nachádza hlavná funkcia, ktorá na začiatku validuje \textit{k-objekt} procesu ako aj \acrshort{ipc} \textit{k-objekt}, nasleduje kontrola virtuálnych svetov, konverzia dátových štruktúr a na koniec rozhodovanie v podobe volania makra \texttt{MED\_DECIDE}. Ostatné \textit{typy prístupov} môžeme nájsť v priečinku \url{security/medusa/l2/} a súboroch \texttt{acctype\_ipc\_*.c}. 
+
+Aby bolo možné kompletne implementovať \textit{typy prístupov} bolo nevyhnutné vytvoriť \textit{udalosť}, ktorá bude kontrolovať a validovať \textit{k-objekty}. Preto sme vytvorili \textit{udalosť} \texttt{getipc}, ktorá má za úlohu inicializovať interné položky a zaregistrovať objekt u autorizačného serveru. Takto zaregistrovaný objekt považujeme za validný a \textit{typ prístupu} môže ďalej vykonávať rozhodovanie. \textit{Typ prístupu} vyvoláva túto \textit{udalosť} pomocou volania funkcie \texttt{medusa\_ipc\_validate}, ktorej návratová hodnota je typu \texttt{medusa\_answer\_t} a v prípade že nadobúda hodnotu \texttt{MED\_OK} tak rozhodovanie pokračuje v opačnom prípade rozhodovanie nenastane a systému je vrátená hodnota, ktorá povoľuje systémové volanie. Ide o vlastnosť Medusy, ktorá v prípade chyby väčšinou systémové volanie povolí.
+
+Pri implementácii \textit{typov prístupu} sme narazili na problém pri systémovom volaní typu \texttt{ctl}, ktoré sme si popísali aj v kapitole \ref{msguse}. Toto systémové volanie môže byť použité s rôznymi prepínačmi a pri použití prepínača \texttt{IPC\_INFO} alebo \texttt{[type]\_INFO}, kde \textit{type} predstavuje konkrétny \acrshort{ipc}, nastáva situácia kedy do funkcie nevstupuje žiadny \acrshort{ipc} objekt. Preto bolo nevyhnutné tento prípad pri \textit{type prístupu} riešiť a v prípade že sa jedná o jeden zo spomínaných prepínačov tak sa pri rozhodovaní ako objekt posiela \texttt{NULL} a položka \texttt{ipc\_class} v \textit{type prístupu} nadobúda hodnotu \texttt{MED\_IPC\_UNDEFINED}. Toto je potrebné zohľadniť pri konfigurácií aby sa predišlo chybám spôsobením hodnotou \texttt{NULL}. Môže vystávať otázka či je nevyhnutné rozhodovať o systémovom volaní \texttt{ctl} pri takomto použití, teda keď používateľ zisťuje limity \acrshort{ipc} mechanizmu. Avšak z pohľadu útočníka aj toto systémové volanie môže predstavovať vhodný bod na získanie cenných informácií o systéme, ktorý sa snaží skompromitovať a preto je nevyhnutné aj toto volanie kontrolovať.
+
+Takto definované \textit{typy prístupov} sme následne využili vo vrstve L1, kde sme v jednotlivých \acrshort{lsm} \textit{hookoch} zavolali príslušné funkcie. Príklad použitia \textit{typu prístupu} môžeme vidieť na ukážke kódu \ref{lst:l1acctype}.
+\begin{lstlisting}[
+  caption={Volanie funkcie \textit{typu prístupu} z vrstvy L1},
+  label={lst:l1acctype},
+  language=c
+]
+static int medusa_l1_msg_queue_associate(struct msg_queue *msq, int msqflg)
+{
+	if(medusa_ipc_associate(&msq->q_perm, msqflg) == MED_NO)
+		return -EPERM;	
+	return 0;
+}
+\end{lstlisting}
+
+\subsection{Konfigurácia autorizačného servera}
+Po doplnení Medusy o ďalšie \textit{typy prístupov} bolo potrebné vytvoriť aj konfiguráciu na strane autorizačného servera s ktorou by sme mohli vykonať testy a odskúšať funkčnosť. Pri našom testovaní sme použili autorizačný server \textit{mYstable} a jeho konfiguráciu v jazyku Python, ktorú môžete vidieť na ukážke kódu \ref{lst:config}. Hlavným zdrojom kontroly v našom prípade bol výstup s programu \texttt{dmesg} a kontrola či sa jednotlivé udalosti vykonávajú a kontrolujú na strane autorizačného servera.
