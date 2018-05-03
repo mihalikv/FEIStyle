@@ -410,8 +410,9 @@ Systém \textit{Medusa} sa skladá z 5 vrstiev a ich funkcie sú nasledovné:
 \item L1 - registrácia všetkých funkcii \textit{lsm} frameworku, teda aj tých ktoré neboli registrované vo vrstve L1
 \item L2 - \textit{typy prístupov}, \textit{udalosti} a \textit{k-objekty}
 \item L3 - registrovanie a odregistrovanie entít z vrstvy L2
-\item L4 - komunikačná vrstva, ktorá definuje aj komunikačný protokol, ktorý je možné vidieť na obrázku \ref{medusakomunikacia}, tento protokol je detailnejšie popísaný v diplomovej práci \textit{MEDÚZA DS9}\cite{kacer}
+\item L4 - komunikačná vrstva, ktorá definuje aj komunikačný protokol, ktorý je možné vidieť na obrázku \ref{medusakomunikacia}
 \end{itemize}
+Komunikácia medzi systémom Medusa a autorizačným serverom Constable je zahájená pozdravom od Medusy. Následne na to sú autorizačnému serveru odoslané podporované \textit{k-objekty} a \textit{typy prístupov}/\textit{udalostí}, na základe čoho si autorizačný server zaznamená čo vie prijímať a v aké dáta budú prichádzať. Po tejto inicializácii Medusa môže začať posielať požiadavky na rozhodovanie a autorizačný server môže vykonávať udalosti \textit{update} a \textit{fetch} popísané v kapitole \ref{acctype}.
 \begin{figure}[!htbp]
   \centering
   \includegraphics[width=12cm]{img/komunikacia.png}
