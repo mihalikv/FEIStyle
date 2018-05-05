@@ -42,7 +42,7 @@ Rúry predstavujú jednosmerný tok dát medzi procesmi: všetky dáta zapísan�
 \end{itemize}
 Niektoré \textit{Unix} systémy ako napríklad \textit{System V Release 4}, implementuje \textbf{full-duplex} rúry, teda rúry, pri ktorých oba konce rúry(súborové deskriptory) je možné použiť ako na zapisovanie tak aj na čítanie. Avšak štandard \textbf{\acrshort{posix}} definuje iba \textbf{half-duplex} rúry, pričom každý proces musí zatvoriť jeden deskriptor pred použitím druhého.\cite{linux}
 
-Takto vytvorená rúra umožňuje komunikáciu medzi rodičovským procesom a jeho potomkami. Avšak je potrebné zabezpečiť aby procesy, ktoré medzi sebou chcú komunikovať zdieľali rovnaké súborové deskriptory. Toto je možné jednoducho dosiahnuť tak, že sa rúra vytvorí pred vytvorením detského procesu(\textit{fork}). Zjednodušený pseudokód môžeme vidieť tu \ref{lst:pipe-c} spolu s ilustračný obrázkom \ref{pipeflow}.\cite{overview}
+Takto vytvorená rúra umožňuje komunikáciu medzi rodičovským procesom a jeho potomkami. Avšak je potrebné zabezpečiť aby procesy, ktoré medzi sebou chcú komunikovať zdieľali rovnaké súborové deskriptory. Toto je možné jednoducho dosiahnuť tak, že sa rúra vytvorí pred vytvorením detského procesu(\textit{fork}). Zjednodušený pseudokód môžeme vidieť na ukážke kódu \ref{lst:pipe-c} spolu s ilustračný obrázkom \ref{pipeflow}.\cite{overview}
 \begin{lstlisting}[
   caption={Použite anonymných rúr},
   label={lst:pipe-c},
@@ -77,11 +77,11 @@ Návratová hodnota funkcie je 0 v prípade úspechu a v prípade chyby je návr
 
 \subsection{Fronty správ}
 Fronty správ si najlepšie môžme predstaviť ako zreťazený zoznam v adresnom priestore jadra. Správy môžu byť odosielané do fronty v poradí a následne načítané z fronty pomocou niekoľko rôznych spôsobov. Každá fronta správ je jednoznačne identifikovaná pomocou \acrshort{ipc} identifikátora. Pre lepšie pochopenie tohto konceptu si popíšeme 3 hlavné štruktúry, ktoré zabezpečujú fungovanie fronty správ v jadre Linuxu.\cite{guide}
-\subsubsection{Štruktúry fronty správ}
+\subsubsection{Štruktúry fronty správ} \label{msgstruct}
 Štruktúra \texttt{msgbuf} (definovaná v \url{linux/msg.h}) predstavuje predlohu ako by mala vyzerať správa, ktorú budeme posielať. Táto predloha obsahuje dve položky: 
 \begin{itemize}
 \item long \textbf{mtype} - umožňuje určiť o aký typ správy ide, napríklad \textit{chybová správa}, \textit{normálna správa} a podobne, možností je nekonečno
-\item char \textbf{mtext}[1] - samotné dáta správy, túto položku je možné ľubovoľne rozšíriť, ako napríklad v ukážke kódu \ref{lst:msgbuf}, avšak s limitom, ktorý je maximálna dĺžka správy \textit{\textbf{MSGMAX}}=8192\footnote{Táto veľkosť je definovaná v \url{linux/msg.h} a môže sa líšiť od verzie jadra. Túto hodnotu je taktiež možné zistiť pomocou príkazu \textit{ipcs -l}.}
+\item char \textbf{mtext}[1] - samotné dáta správy, túto položku je možné ľubovoľne rozšíriť, ako napríklad na ukážke kódu \ref{lst:msgbuf}, avšak s limitom, ktorý je maximálna dĺžka správy \textit{\textbf{MSGMAX}}=8192\footnote{Táto veľkosť je definovaná v \url{linux/msg.h} a môže sa líšiť od verzie jadra. Túto hodnotu je taktiež možné zistiť pomocou príkazu \textit{ipcs -l}.}
 \end{itemize}
 
 \begin{lstlisting}[
@@ -95,7 +95,7 @@ struct message {
 } msg;
 \end{lstlisting}
 
-Každá správa je rozdelená na stránky, ktoré sú dynamicky alokované v pamäti. Veľkosť tejto stránky je závislí od architektúry a zisťuje sa nasledovne \textit{sysconf(\_SC\_PAGESIZE)}. Štruktúra \textbf{\textit{msg\_msg}}, ktorú môžeme vidieť tu \ref{lst:msgmsg}, predstavuje hlavičku každej správy pričom sa inštancie tejto štruktúry nachádzajú v zreťazenom zozname, ktorý je definovaný položkou \textit{m\_list}. V prípade že dĺžka správy je menšia ako $$ \text{PAGE\_SIZE} - \text{sizeof(struct msg\_msg)} $$ celý obsah správy sa nachádza v pamäťovej oblasti za štruktúrou \textit{msg\_msg}. V opačnom prípade sa prvá časť správy nachádza na rovnakom mieste a ostatné stránky sa nachádzajú v pamäťovej oblasti, na ktorú ukazuje ukazovateľ \textit{next}. Tento ukazovateľ odkazuje na štruktúru \textit{msg\_msgseg} pozri \ref{lst:msgmsgseg}, ktorá obsahuje ukazovateľ \textit{next} na ďalšiu stránku, pričom v pamäťovej oblasti za touto štruktúrou sa nachádzajú dáta aktuálnej stránky.
+Každá správa je rozdelená na stránky, ktoré sú dynamicky alokované v pamäti. Veľkosť tejto stránky je závislí od architektúry a zisťuje sa nasledovne \textit{sysconf(\_SC\_PAGESIZE)}. Štruktúra \textbf{\textit{msg\_msg}}, ktorú môžeme vidieť na výpise štruktúry \ref{lst:msgmsg}, predstavuje hlavičku každej správy pričom sa inštancie tejto štruktúry nachádzajú v zreťazenom zozname, ktorý je definovaný položkou \textit{m\_list}. V prípade že dĺžka správy je menšia ako $$ \text{PAGE\_SIZE} - \text{sizeof(struct msg\_msg)} $$ celý obsah správy sa nachádza v pamäťovej oblasti za štruktúrou \textit{msg\_msg}. V opačnom prípade sa prvá časť správy nachádza na rovnakom mieste a ostatné stránky sa nachádzajú v pamäťovej oblasti, na ktorú ukazuje ukazovateľ \textit{next}. Tento ukazovateľ odkazuje na štruktúru \textit{msg\_msgseg}, ktorej položky môžeme vidieť na definícii štruktúry \ref{lst:msgmsgseg}, ktorá obsahuje ukazovateľ \textit{next} na ďalšiu stránku, pričom v pamäťovej oblasti za touto štruktúrou sa nachádzajú dáta aktuálnej stránky.
 \begin{lstlisting}[
   caption={Štruktúra msg\_msg},
   label={lst:msgmsg},
@@ -165,7 +165,7 @@ Ak je definovaný príznak \texttt{IPC\_EXCL} spolu s \texttt{IPC\_CREATE} a ide
 Na posielanie a prijímanie správ z fronty sa používajú systémové volania \texttt{msgsnd} a \texttt{msgrcv}. Funkcia \texttt{msgsnd} má nasledovné parametre\cite{msgop}:
 \begin{itemize}
 \item \texttt{msgid} identifikátor fronty získaný z funkcie \texttt{msgget}
-\item \texttt{msgp} ukazovateľ na štruktúru, ktorú si používateľ definuje sám a mal by vychádzať zo šablóny ktorú sme si popísali v kapitole \ref{lst:msgbuf}
+\item \texttt{msgp} ukazovateľ na štruktúru, ktorú si používateľ definuje sám a mal by vychádzať zo šablóny ktorú sme si popísali v kapitole \ref{msgstruct}
 \item \texttt{msgsz} veľkosť dátovej štruktúry, ktorú chceme prenášať
 \item \texttt{msgflg} príznaky, ktoré definujú čo sa má diať v prípade, že je fronta plná
 \end{itemize}
@@ -305,7 +305,7 @@ Posledným systémovým volaním je \texttt{shmctl}, ktoré pracuje analogicky k
 Na prácu so zdieľanou pamäťou teda zapisovanie a čítanie z pamäte používame rovnaké nástroje ako na prácu s bežným súborom a teda na zapisovanie môžeme použiť napríklad \texttt{fprintf} a na čítanie \texttt{putchar}.
 \subsection{Sokety}
 Soket predstavuje obojsmernú komunikačnú rúru, ktorá môže byť použitá na široké množstvo oblastí. Jedna z najpoužívanejších oblastí pri soketoch je komunikácia cez Internet. Avšak sokety taktiež umožňujú aj lokálnu komunikáciu medzi dvoma procesmi.\cite{beej} Nakoľko sokety zaberajú široký záber v nasledujúcich odsekoch sa pokúsime tento koncept opísať na príklade lokálnych soketov a preto, niektoré informácie nemusia byť kompletné a pre odlišné použitie sa treba inštruovať podľa\cite{socket}.
-\subsubsection{Použitie soketov}
+
 Soket sa vytvára pomocou funkcie \texttt{socket} a vytvorenie lokálneho soketu vyzerá nasledovne:
 \begin{lstlisting}[
   caption={Vytvorenie soketu},
@@ -593,7 +593,7 @@ int ipc_kern2kobj(struct ipc_kobject * ipck, struct kern_ipc_perm * ipcp)
 }
 \end{lstlisting}
 \subsubsection{Operácie \textit{fetch} a \textit{update}} \label{ops}
-Pre plnohodnotnú funkcionalitu bolo potrebné definovať operácie \textit{fetch} a \textit{update}, ktoré sme si vysvetlili v kapitole \ref{kobjekt}. Tieto operácie sa definujú \textit{k-objektom} konkrétnych mechanizmov, pričom všeobecný \textit{k-objekt} \texttt{ipc\_kobject} tieto operácie nedefinuje čo treba zohľadniť pri konfigurácii autorizačného servera. 
+Pre plnohodnotnú funkcionalitu bolo potrebné definovať operácie \textit{fetch} a \textit{update}, ktoré sme si vysvetlili v kapitole \ref{kobjekt}. Tieto operácie sa definujú \textit{k-objektom} konkrétnych mechanizmov, pričom všeobecný \textit{k-objekt}(\texttt{ipc\_kobject}) tieto operácie nedefinuje čo treba zohľadniť pri konfigurácii autorizačného servera. 
 \begin{lstlisting}[
   caption={Operácie \texttt{fetch} pre \textit{k-objekt} semaforu},
   label={lst:semfetch},
@@ -680,4 +680,6 @@ static int medusa_l1_msg_queue_associate(struct msg_queue *msq, int msqflg)
 \end{lstlisting}
 
 \subsection{Konfigurácia autorizačného servera}
-Po doplnení Medusy o ďalšie \textit{typy prístupov} bolo potrebné vytvoriť aj konfiguráciu na strane autorizačného servera s ktorou by sme mohli vykonať testy a odskúšať funkčnosť. Pri našom testovaní sme použili autorizačný server \textit{mYstable} a jeho konfiguráciu v jazyku Python, ktorú môžete vidieť na ukážke kódu \ref{lst:config}. Hlavným zdrojom kontroly v našom prípade bol výstup s programu \texttt{dmesg} a kontrola či sa jednotlivé udalosti vykonávajú a kontrolujú na strane autorizačného servera.
+Po doplnení Medusy o ďalšie \textit{typy prístupov} bolo potrebné vytvoriť aj konfiguráciu na strane autorizačného servera s ktorou by sme mohli vykonať testy a odskúšať funkčnosť. Pri našom testovaní sme použili autorizačný server \textit{mYstable} a jeho konfiguráciu v jazyku Python, ktorú môžete vidieť na ukážke kódu \ref{lst:config}. Tento konfiguračný súbor obsahuje pomocnú funkciu \texttt{get\_concrete\_ipc}, ktorej úlohou je na strane autorizačného servera, zmeniť všeobecný \textit{k-object} na konkrétny na základe typu mechanizmu, ktorý sa nachádza v každom \textit{type prístupu} v položke \texttt{ipc\_class}. Ďalej sa v tejto konfigurácii nachádza obsluha pre \textit{udalosť} \texttt{ipc}, ktorá pre jednoduchosť akceptuje všetky požiadavky. Poslednou časťou je samotná obsluha konkrétneho \textit{typu prístupu} a na tejto ukážke je zobrazená obsluha pre \textit{typ prístupu} \texttt{ipc\_ctl}, ktorý sme si taktiež popísali v predchádzajúcej kapitole. Tento \textit{typ prístupu} musí ošetrovať aj prípad kedy typ mechanizmu je 3(\texttt{MED\_IPC\_UNDEFINED}) a v tomto prípade vieme, že ide o špeciálny prípad s príznakom \texttt{IPC\_INFO}, ktorý sme spomínali taktiež v predchádzajúcej kapitole. 
+
+Takto definovaný konfiguračný súbor spolu s ostatnými \textit{typmi prístupov} sme následne použili na kontrolu správnej funkčnosti systému Medusa. Hlavným zdrojom kontroly v našom prípade bol výstup s programu \texttt{dmesg}. Tento program má za úlohu zobraziť zásobník správ jadra a je možné do tohto zásobníka zapisovať pomocou funkcie jazyka C \texttt{printk}. Pre testovacie a ladiace potreby preto Medusa obsahuje špeciálny \textit{k-objekt} \texttt{printk}, ktorý umožňuje na strane autorizačného servera vyvolať operáciu \texttt{update} a zapísať tak do tohto zásobníka v jadre. Pre účeli testovania sme si vytvorili jednoduché programy v jazyku C, ktoré vytvorili \acrshort{ipc} mechanizmy a nakonfigurovali autorizačný server tak aby pomocou \textit{k-objektu} \texttt{printk} zapísal kľúčové informácie o \texttt{ipc} \textit{k-objekte}. Takto sme mohli pozorovať čí sa vo výpise programu \textit{dmesg} po spustení testovacieho programu vypisujú očakávané hodnoty a overiť správnu funkčnosť systému Medusa.

@@ -255,6 +255,8 @@
   {č}{{\ˇc}}1 {ž}{{\ˇz}}1 {ť}{{\ˇt}}1 {ý}{{\'y}}1 
 }
 
+\renewcommand{\lstlistingname}{Uk\a'a\v{z}ka k\a'odu}
+
 %\IfEqCase*{\FEIenglish}{
 %    {0}{
 %        \addto\captionsslovak{\renewcommand{\figurename}{Obr\a'azok}}
