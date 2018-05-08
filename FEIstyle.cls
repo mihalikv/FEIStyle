@@ -237,7 +237,7 @@
   breakatwhitespace=true,
   showstringspaces=false, % removes ␣ character from " "
   captionpos=b, % caption below text
-  extendedchars=true,
+  extendedchars=true,  
   literate=
   {á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'i}}1 {ó}{{\'o}}1 {ú}{{\'u}}1
   {Á}{{\'A}}1 {É}{{\'E}}1 {Í}{{\'I}}1 {Ó}{{\'O}}1 {Ú}{{\'U}}1

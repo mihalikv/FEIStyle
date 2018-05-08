@@ -20,7 +20,7 @@ Signál je možné vyvolať systémovým volaním \textbf{kill}. Toto systémov�
 \end{itemize}
 Podporované typy je možné zistiť pomocou príkazu \textit{kill -l} alebo v súbore \textit{/include/linux/signal.h}.
 
-V prípade že je definovaná obslužná funkcia, táto funkcia sa vykoná, v opačnom prípade je použitá štandardná obsluha signálu. Obslužnú funkciu je možné definovať pomocou funkcie \textbf{signal}, avšak správanie tejto funkcie môže byť rozdielne vzhľadom na platformu. Preto sa odporúča používať funkciu \textbf{sigaction}, ktorá bola definovaná v štandarde \textbf{POSIX.1}. Toto systémové volanie má parametere\cite{sigaction}:
+V prípade že je definovaná obslužná funkcia, táto funkcia sa vykoná, v opačnom prípade je použitá štandardná obsluha signálu. Obslužnú funkciu je možné definovať pomocou funkcie \textbf{signal}, avšak správanie tejto funkcie môže byť rozdielne vzhľadom na platformu. Preto sa odporúča používať funkciu \textbf{sigaction}, ktorá bola definovaná v štandarde \textbf{POSIX.1}. Toto systémové volanie má tieto parametre\cite{sigaction}:
 \begin{itemize}
 \item \textit{signum} - typ signálu, ktorý chceme obslúžiť
 \item \textit{act} - definuje akciu, ktorá sa má vykonať pri obsluhe signálu
@@ -35,7 +35,7 @@ Rúry predstavujú jednosmerný tok dát medzi procesmi: všetky dáta zapísan�
 \item Pomenované rúry - objekt v súborovom strome
 \end{itemize}
 \subsubsection{Anonymné rúry}
-\textbf{Anonymné rúry} je možné vytvoriť pomocou systémového volania \textbf{pipe}, alebo taktiež pomocou znaku \textbf{|} vo väčšine \textit{Unix} príkazových riadkoch.Systémové volanie \textbf{pipe} obsahuje jeden parameter, ktorým je pole \textit{pipefd} o veľkosti 2. Toto pole obsahuje po návrate z funkcie súborové deskriptory. Tieto dva súborové deskriptory predstavujú konce rúry, \textit{pipefd[0]} je čítací koniec rúry a \textit{pipefd[1]} je zapisovací koniec rúry. Tieto súborové deskriptory je následne možné použiť na zapisovanie a čítanie pomocou systémových volaní \textit{write}\footnote{\url{http://man7.org/linux/man-pages/man2/write.2.html}} a \textit{read}\footnote{\url{http://man7.org/linux/man-pages/man2/read.2.html}}. Tieto operácie sú blokujúce v dvoch prípadoch:
+\textbf{Anonymné rúry} je možné vytvoriť pomocou systémového volania \textbf{pipe}, alebo taktiež pomocou znaku \textbf{|} vo väčšine \textit{Unix} príkazových riadkoch. Systémové volanie \textbf{pipe} obsahuje jeden parameter, ktorým je pole \textit{pipefd} o veľkosti 2. Toto pole obsahuje po návrate z funkcie súborové deskriptory. Tieto dva súborové deskriptory predstavujú konce rúry, \textit{pipefd[0]} je čítací koniec rúry a \textit{pipefd[1]} je zapisovací koniec rúry. Tieto súborové deskriptory je následne možné použiť na zapisovanie a čítanie pomocou systémových volaní \textit{write}\footnote{\url{http://man7.org/linux/man-pages/man2/write.2.html}} a \textit{read}\footnote{\url{http://man7.org/linux/man-pages/man2/read.2.html}}. Tieto operácie sú blokujúce v dvoch prípadoch:
 \begin{itemize}
 \item write - rúra je plná
 \item read - rúra je prázdna
@@ -68,7 +68,7 @@ if (child_pid == 0) {
 
 Nevýhodou tohto systémového volania je absencia v súborovom strome a teda nie je možné využiť tento \acrshort{ipc} mechanizmus na komunikáciu medzi ľubovoľnými dvoma alebo viacerými procesmi.\cite{overview}
 \subsubsection{Pomenované rúry}
-Pomenované rúry taktiež nazývané aj \textbf{\acrshort{fifo}} na rozdiel od anonymných rúr máju meno v súborovom systéme. Jednou z možností ako vytvoriť tento typ rúry je pomocou funkcie \textbf{mkfifo}, ktorá je definovaná v štandarde \acrshort{posix}. Táto funkcia v svojej implementácií volá systémové volanie \textit{mknod} s príznakom, ktorý definuje že ide o pomenovanú rúru. Funkcia \textbf{mkfifo} má 2 parametre:
+Pomenované rúry, taktiež nazývané aj \textbf{\acrshort{fifo}}, na rozdiel od anonymných rúr majú meno v súborovom systéme. Jednou z možností ako vytvoriť tento typ rúry je pomocou funkcie \textbf{mkfifo}, ktorá je definovaná v štandarde \acrshort{posix}. Táto funkcia vo svojej implementácii volá systémové volanie \textit{mknod} s príznakom, ktorý definuje že ide o pomenovanú rúru. Funkcia \textbf{mkfifo} má 2 parametre:
 \begin{itemize}
 \item \textit{pathname} - názov rúry
 \item \textit{mode} - práva súboru 
@@ -76,7 +76,7 @@ Pomenované rúry taktiež nazývané aj \textbf{\acrshort{fifo}} na rozdiel od 
 Návratová hodnota funkcie je 0 v prípade úspechu a v prípade chyby je návratová hodnota -1. Takto vytvorenú rúru je možné rovnako ako anonymné rúry obsluhovať pomocou systémových volaní \textit{read} a \textit{write}.\cite{mkfifo}
 
 \subsection{Fronty správ}
-Fronty správ si najlepšie môžme predstaviť ako zreťazený zoznam v adresnom priestore jadra. Správy môžu byť odosielané do fronty v poradí a následne načítané z fronty pomocou niekoľko rôznych spôsobov. Každá fronta správ je jednoznačne identifikovaná pomocou \acrshort{ipc} identifikátora. Pre lepšie pochopenie tohto konceptu si popíšeme 3 hlavné štruktúry, ktoré zabezpečujú fungovanie fronty správ v jadre Linuxu.\cite{guide}
+Fronty správ si najlepšie môžme predstaviť ako zreťazený zoznam v adresnom priestore jadra. Správy môžu byť odosielané do fronty, pričom majú definovanéporadie, a následne načítané z fronty pomocou niekoľko rôznych spôsobov. Každá fronta správ je jednoznačne identifikovaná pomocou \acrshort{ipc} identifikátora. Pre lepšie pochopenie tohto konceptu si popíšeme 3 hlavné štruktúry, ktoré zabezpečujú fungovanie fronty správ v jadre Linuxu.\cite{guide}
 \subsubsection{Štruktúry fronty správ} \label{msgstruct}
 Štruktúra \texttt{msgbuf} (definovaná v \url{linux/msg.h}) predstavuje predlohu ako by mala vyzerať správa, ktorú budeme posielať. Táto predloha obsahuje dve položky: 
 \begin{itemize}
@@ -87,7 +87,7 @@ Fronty správ si najlepšie môžme predstaviť ako zreťazený zoznam v adresno
 \begin{lstlisting}[
   caption={Príklad vlastnej štruktúry správy},
   label={lst:msgbuf},
-  language=c
+  language=c,float,floatplacement=H
 ]
 struct message {
     long type;
@@ -99,7 +99,7 @@ Každá správa je rozdelená na stránky, ktoré sú dynamicky alokované v pam
 \begin{lstlisting}[
   caption={Štruktúra msg\_msg},
   label={lst:msgmsg},
-  language=c
+  language=c,float,floatplacement=H
 ]
 struct msg_msg {
 	struct list_head m_list;
@@ -114,7 +114,7 @@ struct msg_msg {
 \begin{lstlisting}[
   caption={Štruktúra msg\_msgseg},
   label={lst:msgmsgseg},
-  language=c
+  language=c,float,floatplacement=H
 ]
 struct msg_msgseg {
 	struct msg_msgseg *next;
@@ -122,11 +122,11 @@ struct msg_msgseg {
 };
 \end{lstlisting}
 
-Poslednou štruktúrou, ktorá sa nachádza najvyššie v hierarchií týchto štruktúr je \texttt{\textbf{msq\_queue}} a jej deklaráciu môžete vidieť na ukážke kódu \ref{lst:msgmsgseg}. Najdôležitejšou položkou tejto štruktúry je položka\texttt{q\_messages}, ktorá predstavuje prvý element zreťazeného zoznamu všetkých správ vo fronte. Ďalšie zreťazené zoznamy, ktoré sa tu nachádzajú sú \texttt{q\_receivers} a \texttt{q\_senders}, ktoré obsahujú zreťazené zoznamy procesov, ktoré posielajú správy a procesov, ktoré prijímajú správy. Zaujímavou položkou z pohľadu bezpečnosti je položka \texttt{q\_perm}, ktorá obsahuje inštanciu štruktúry \texttt{\textbf{kern\_ipc\_perm}}. Túto štruktúru si popíšeme v kapitole \ref{kernipcperm}.\cite{linux}
+Poslednou štruktúrou, ktorá sa nachádza najvyššie v hierarchií týchto štruktúr je \texttt{\textbf{msq\_queue}} a jej deklaráciu môžete vidieť na ukážke kódu \ref{lst:msgmsgseg}. Najdôležitejšou položkou tejto štruktúry je položka \texttt{q\_messages}, ktorá predstavuje prvý element zreťazeného zoznamu všetkých správ vo fronte. Ďalšie zreťazené zoznamy, ktoré sa tu nachádzajú sú \texttt{q\_receivers} a \texttt{q\_senders}, ktoré obsahujú zreťazené zoznamy procesov, ktoré posielajú správy a procesov, ktoré prijímajú správy. Zaujímavou položkou z pohľadu bezpečnosti je položka \texttt{q\_perm}, ktorá obsahuje inštanciu štruktúry \texttt{\textbf{kern\_ipc\_perm}}. Túto štruktúru si popíšeme v kapitole \ref{kernipcperm}.\cite{linux}
 \begin{lstlisting}[
   caption={Štruktúra msq\_queue},
   label={lst:msgmsgseg},
-  language=c
+  language=c,float,floatplacement=H
 ]
 struct msg_queue {
 	struct kern_ipc_perm q_perm;
@@ -141,8 +141,8 @@ struct msg_queue {
 \begin{itemize}
 \item lock - uzamykací mechanizmus pre ochranu \acrshort{ipc} objektu
 \item deleted - príznak, či bol zdroj uvoľnený
-\item id
-\item key - jednoznačný identifikátor, v rámci konkrétneho typu objektu, to znamená, že jedna inštancia semafora, zdieľanej pamäte alebo fronty správ môže mať rovnaký identifikátor
+\item id -  identifikátor, ktorý sa používa interne v jadre systému
+\item key - identifikátor, v rámci konkrétneho typu objektu, to znamená, že jedna inštancia semafora, zdieľanej pamäte alebo fronty správ môže mať rovnaký identifikátor
 \item uid - ID používateľa, ktorý vlastní \acrshort{ipc} objekt
 \item gid - ID skupiny, ktorá vlastní \acrshort{ipc} objekt
 \item cuid - ID používateľa, ktorý vytvoril \acrshort{ipc} objekt
@@ -150,7 +150,7 @@ struct msg_queue {
 \item mode - bitová maska oprávnení
 \item seq - sekvenčné číslo, používané sa na vytvorenie nového identifikátora pre \acrshort{ipc} objekt
 \item security - ukazovateľ na štruktúru, ktorú vytvára zvolené bezpečnostné riešenie v jadre Linuxu
-\item khtnode
+\item khtnode - hešovacia tabuľka, ktorá obsahuje \acrshort{ipc} objekty
 \item rcu - \acrshort{rcu} synchronizačný mechanizmus
 \item refcount - počítadlo použití \acrshort{ipc} objektu
 \end{itemize}
@@ -171,9 +171,9 @@ Na posielanie a prijímanie správ z fronty sa používajú systémové volania 
 \end{itemize}
 Funkcia \texttt{msgrcv}, odstráni správu z frontu a premiestni do pamäte, na ktorý ukazuje parameter funkcie \texttt{msgp}. Ďalšie parametre sú\cite{msgop}:
 \begin{itemize}
-\item \texttt{msgsz} maximálnu veľkosť dát v bytoch pre položku \texttt{mtext}, štruktúry, na ktorú ukazuje ukazovateľ \texttt{msgp}
+\item \texttt{msgsz} maximálnu veľkosť dát v bajtoch pre položku \texttt{mtext}, štruktúry, na ktorú ukazuje ukazovateľ \texttt{msgp}
 \item \texttt{msgflg} príznaky, ktoré definujú čo sa má diať v prípade, že je fronta prázdna
-\item \texttt{msgtyp} číslo, ktoré definuje ktorý typ správy bude ako prvý vybraný z fronty(nemôže byt definovaný príznak \texttt{MSG\_COPY}), v prípade že je definovaný príznak \texttt{MSG\_EXCEPT}, tak sa z fronty vyberá prvá správa z typom odlišným od \texttt{msgtyp}
+\item \texttt{msgtyp} číslo, ktoré definuje, ktorý typ správy bude ako prvý vybraný z fronty(nemôže byt definovaný príznak \texttt{MSG\_COPY}), v prípade že je definovaný príznak \texttt{MSG\_EXCEPT}, tak sa z fronty vyberá prvá správa z typom odlišným od \texttt{msgtyp}
 \end{itemize}
 Posledným systémovým volaním tohto mechanizmu je \texttt{msgctl}, ktoré vykonáva kontrolné operácie nad objektom. Funkcia má 3 parametre\cite{msgctl}:
 \begin{itemize}
@@ -189,16 +189,16 @@ Typy operácie nad frontami správ sú nasledovné\cite{msgctl}:
 \item \texttt{IPC\_INFO} a \texttt{MSG\_INFO} získava limity a systémové nastavenia pre fronty správ, dáta sa nachádzajú na adrese ukazovateľa \texttt{buf}, avšak dáta sú v štruktúre typu \texttt{msginfo}(viď \ref{lst:msginfo}) a preto je potrebné pre-typovanie\footnote{\texttt{IPC\_INFO} a \texttt{MSG\_INFO} ako aj \texttt{IPC\_STAT} a \texttt{MSG\_STAT} vracajú mierne odlišné dáta a sú platformovo závislé pre viac info pozri \url{http://man7.org/linux/man-pages/man2/msgctl.2.html}}
 \end{itemize}
 \subsection{Semafory}
-Semafor ako \acrshort{ipc} mechanizmus nepredstavuje nástoj na prenášanie dát ale slúži ako synchronizačný mechanizmus na ochranu zdieľaných zdrojov pri viac procesovom alebo viac vláknovom vykonávaný programu. Všeobecný semafor si môžme predstaviť ako počítadlo, ktoré je možné atomický upravovať. Semafor zvyčajne implementuje dve základné funkcie, ktoré slúžia na zvýšenie(\texttt{signal}) a zníženie(\texttt{wait}) tohto počítadla. Napríklad ak proces 1 chce vstúpiť do chránenej oblasti(pristúpiť k zdieľaným zdrojom) zníži počítadlo semaforu. Proces 2, ktorý taktiež bude chcieť pristúpiť k týmto zdrojom zníži semafor čo má za následok bloknutie procesu 2, ktorý musí počkať na zvýšenie počítadlo. Proces 1 v prípade že bude opúšťať kritickú oblasť zvýši počítadlo semaforu čo zabezpečí odblokovanie procesu 1.
+Semafor ako \acrshort{ipc} mechanizmus nepredstavuje nástoj na prenášanie dát, ale slúži ako synchronizačný mechanizmus na ochranu zdieľaných zdrojov pri viac procesovom alebo viac vláknovom vykonávaný programu. Všeobecný semafor si môžme predstaviť ako počítadlo, ktoré je možné atomický upravovať. Semafor zvyčajne implementuje dve základné funkcie, ktoré slúžia na zvýšenie(\texttt{signal}) a zníženie(\texttt{wait}) tohto počítadla. Napríklad ak proces 1 chce vstúpiť do chránenej oblasti(pristúpiť k zdieľaným zdrojom) zníži počítadlo semaforu. Proces 2, ktorý taktiež bude chcieť pristúpiť k týmto zdrojom zníži semafor čo má za následok bloknutie procesu 2, ktorý musí počkať na zvýšenie počítadla. Proces 1 v prípade, že bude opúšťať kritickú oblasť, zvýši počítadlo semaforu čo zabezpečí odblokovanie procesu 1.
 
-Semafor \textit{System V} semafory na rozdiel od \acrshort{posix} semaforov nepredstavujú len jedno počítadlo ale skupiny počítadiel. Každé jedno počítadlo môže chrániť nejakú kritickú oblasť a teda jeden \textit{System V} semafor môže chrániť viacero kritických oblastí. Veľkou výhodou je taktiež schopnosť navrátiť operácie vykonané na semafore v prípade, že proces, ktorý bol v kritickej oblasti neočakávane skončí a zabezpečiť tak aby čakajúci proces mohol vstúpiť do kritickej oblasti. 
+\textit{System V} semafory na rozdiel od \acrshort{posix} semaforov nepredstavujú len jedno počítadlo ale skupiny počítadiel. Každé jedno počítadlo môže chrániť kritickú oblasť a teda jeden \textit{System V} semafor môže chrániť viacero kritických oblastí. Veľkou výhodou je taktiež schopnosť navrátiť operácie vykonané na semafore v prípade, že proces, ktorý bol v kritickej oblasti neočakávane skončí a zabezpečiť tak aby čakajúci proces mohol vstúpiť do kritickej oblasti. 
 
 V nasledujúcich odsekoch si popíšeme interné štruktúry v jadre Linuxu, ktoré zabezpečujú fungovanie semaforov a taktiež aj použitie tohto \acrshort{ipc} mechanizmu.\cite{linux}
 \subsubsection{Štruktúry semaforov}
-Základná štruktúra, ktorá v sebe nesie hodnotu jedného počítadla má nasledovné položky:
+Základná štruktúra \texttt{sem}, ktorá v sebe nesie hodnotu jedného počítadla má nasledovné položky:
 \begin{itemize}
 \item \texttt{semval} hodnota počítadla
-\item \texttt{semval} \acrshort{pid} procesu, ktorý posledný modifikoval semafor
+\item \texttt{sempid} \acrshort{pid} procesu, ktorý posledný modifikoval semafor
 \item \texttt{lock} uzamykací mechanizmus pre ochranu počítadla
 \item \texttt{pending\_alter} a \texttt{pending\_const} operácie, ktoré čakajú na vykonanie
 \item \texttt{sem\_otime} čas posledného volania funkcie \texttt{sem\_op} nad počítadlom
@@ -222,15 +222,15 @@ Operácie, ktoré sa nad týmito semaformi vykonávajú sú uložené v štrukt�
 \item \texttt{sops} pole štruktúr typu \texttt{sembuf}, ktoré definuje nevykonané operácie
 \item \texttt{blocking} pole štruktúr typu \texttt{sembuf}, ktoré definuje operácie ktoré sú blokovacie
 \item \texttt{nsops} počet operácií
-\item \texttt{alter} príznak, ktorý označuje či operácia modifikuje pole semaforov
-\item \texttt{dupsop} TODO príznak, ktorý označuje či operácia modifikuje pole semaforov
+\item \texttt{alter} príznak, ktorý označuje, či operácia modifikuje pole semaforov
+\item \texttt{dupsop} príznak, ktorý označuje, či operácia modifikuje viacero ako len jeden semafor
 \end{itemize}
 Štruktúry na prácu s operáciami, ktoré majú byť v prípade ukončenia programu obnovené do pôvodného stavu sú štruktúry \texttt{sem\_undo} a \texttt{sem\_undo\_list}. Každý proces má jednu prislúchajúcu štruktúru \texttt{sem\_undo} a v prípade že je proces ukončený tak sa tieto operácie vykonajú. Štruktúra \texttt{sem\_undo\_list} zabezpečuje zdieľaný prístup k \texttt{sem\_undo} štruktúram v prípade že viacero procesov zdieľa jeden list čo je možné zabezpečiť pomocou príznaku \texttt{CLONE\_SYSVSEM} pri vytváraní nového procesu.\cite{newlinux}
 \subsubsection{Použitie semaforov} \label{smaforuse}
 \textit{System V} semafor sa vytvára pomocou systémového volania \texttt{semget}, ktoré je analogické k funkcii \texttt{msgget}, ktorú sme si popísali v kapitole \ref{msguse}. Jediným rozdielom je parameter \textbf{\texttt{nsems}}, ktorý definuje koľko jednotlivých semaforov chceme vytvoriť.\cite{semget}
 Takto vytvorený semafor je možné používať a vykonávať nad ním operácie pomocou systémového volania \texttt{semop}, ktoré má nasledovné parametre:
 \begin{itemize}
-\item \texttt{semid} identiifkátor semaforu
+\item \texttt{semid} identifikátor semaforu
 \item \texttt{sops} operácie nad semaforom
 \item \texttt{nsops} počet operácii v poli
 \end{itemize}
@@ -240,18 +240,18 @@ Jednotlivé operácie sú definované pomocou štruktúry \texttt{sembuf}, ktor�
 \item \texttt{sem\_op} typ operácie
 \item \texttt{sem\_flg} príznaky operácie
 \end{itemize}
-\texttt{sem\_flg} môže nadobúdať dve hodnoty, ktoré sú \texttt{SEM\_UNDO} a \texttt{IPC\_NOWAIT}. \texttt{SEM\_UNDO} indikuje že chceme aby daná operácia bola obnoviteľná. Príznak \texttt{IPC\_NOWAIT} priamo súvisí s parametrom \texttt{sem\_op}, ktorý môže nadobudnúť tieto stavy\cite{semop}:
+Argument \texttt{sem\_flg} môže nadobúdať dve hodnoty, ktoré sú \texttt{SEM\_UNDO} a \texttt{IPC\_NOWAIT}. \texttt{SEM\_UNDO} indikuje, že chceme aby daná operácia bola obnoviteľná. Príznak \texttt{IPC\_NOWAIT} priamo súvisí s parametrom \texttt{sem\_op}, ktorý môže nadobudnúť tieto stavy\cite{semop}:
 \begin{itemize}
 \item \texttt{sem\_op} > 0 hodnota \texttt{sem\_op} sa pričíta k hodnota počítadla(vyžaduje sa právo na zápis)
 \item \texttt{sem\_op} == 0 a \texttt{semval} == 0 tak operácia okamžite prebehne, inak ak je definovaný príznak \texttt{IPC\_NOWAIT} operácie skončí s chybou ak však tento príznak nieje definovaný proces čaká pokiaľ bude semafor 0(vyžaduje práva na čítanie semaforu)
 \item \texttt{sem\_op} < 0 a zároveň \texttt{semval} >= \texttt{sem\_op} tak je operácia vykonaná okamžite, inak analogicky k predošlému prípadu operácia skončí buď s chybou alebo proces čaká pokiaľ bude zvýšená hodnota počítadla(vyžaduje sa právo na zápis)
 \end{itemize}
-Posledným systémovým volaním je \texttt{semctl}, ktoré rovnako ako systémové volanie \texttt{msgctl} z kapitoly \ref{msguse} získava alebo zapisuje informácie o \acrshort{ipc} objekte avšak s rozdielom že využíva odlišnú štruktúru na ukladanie dát. \texttt{semctl} má nasledovné argument\cite{semctl}:
+Posledným systémovým volaním je \texttt{semctl}, ktoré rovnako ako systémové volanie \texttt{msgctl} z kapitoly \ref{msguse}, získava alebo zapisuje informácie o \acrshort{ipc} objekte, avšak s rozdielom, že využíva odlišnú štruktúru na ukladanie dát. Funkcia \texttt{semctl} má nasledovné argument\cite{semctl}:
 \begin{itemize}
 \item \texttt{semid} identifikátor objektu
 \item \texttt{semnum} index semaforu v skupine semaforov
 \item \texttt{cmd} typ operácie
-\item \texttt{arg} posledný argument je voliteľný podľa typu operácie, ide o union, ktorý je definovaný na ukážke kódu \ref{lst:semun}
+\item \texttt{arg} posledný argument je voliteľný podľa typu operácie, ide o \textit{union}, ktorý je definovaný na ukážke kódu \ref{lst:semun}
 \end{itemize}
 Typy operácii, ktoré sme si definovali pri \texttt{msgctl} taktiež existujú aj pri semafóroch a zachovávajú rovnakú funkcionalitu ale výsledok týchto operácií sa ukladá do položky \texttt{arg.buf}, ktorá je typu \texttt{semid\_ds}(viď \ref{lst:semid}) pre 32 bitové systéme alebo \texttt{semid64\_ds}(viď \ref{lst:semid64}) pre 64 bitové systémy. Toto systémové volanie umožňuje aj semaforovo špecifické operácie, ktoré sú nasledovné\cite{semctl}:
 \begin{itemize}
@@ -277,7 +277,7 @@ Hlavnou štruktúrou, ktorá má informácie o objektoch zdieľanej pamäte je \
 \item \texttt{shm\_creator} ukazovateľ na štruktúru \texttt{task\_struct}, ktorý definuje proces, ktorý vytvoril zdieľanú pamäť(NULL v prípade že bol proces ukončený)
 \item \texttt{shm\_clist} zoznam štruktúr \texttt{shmid\_kernel}, ktoré majú rovnaký proces, ktorý ich vytvoril
 \end{itemize}
-Najdôležitejšou položkou je \texttt{shm\_file}, ktorá predstavuje samotnú zdieľanú pamäť a keďže ide o súbor, môžeme vidieť blízke prepojenie s Linux \acrshort{vfs}. Avšak nejde o normálny súbor a nie je možné ho nájsť v strome súborového systému, pretože sa využíva špeciálny \textit{shm} súborový systém.\cite{linux} Preto ak proces chce zapisovať alebo čítať z tohoto pamäťového segmentu je potrebne aby sa pripojil. Ako na to sa dozvieme v kapitole \ref{shmuse}.
+Najdôležitejšou položkou je \texttt{shm\_file}, ktorá predstavuje samotnú zdieľanú pamäť a keďže ide o súbor, môžeme vidieť blízke prepojenie s Linux \acrshort{vfs}. Avšak nejde o normálny súbor a nie je možné ho nájsť v strome súborového systému, pretože sa využíva špeciálny \textit{shm} súborový systém.\cite{linux} Preto ak proces chce zapisovať alebo čítať z tohoto pamäťového segmentu je potrebne aby sa pripojil. Ako na to sa dozvieme v kapitole nasledujúcej kapitole.
 \subsubsection{Požitie zdieľanej pamäte} \label{shmuse}
 Zdieľanú pamäť podobne ako ostatne \textit{System V} mechanizmy je možné vytvoriť pomocou systémového volania \texttt{shmget}. Toto systémové volanie sa líši v argumente \texttt{size}, ktorý určuje akú veľkú pamäť chceme alokovať, pričom táto pamäť je zaokrúhlená nahor k najbližšiemu násobku \texttt{PAGE\_SIZE}. Jedným z rozdielov je taktiež možnosť definovať príznaky \texttt{SHM\_HUGETLB}, \texttt{SHM\_HUGE\_2MB} a \texttt{SHM\_HUGE\_1GB}, ktoré signalizujú alokáciu s použitím \textit{huge pages}\footnote{Pre viac info pozri \url{https://elixir.bootlin.com/linux/latest/source/Documentation/vm/hugetlbpage.txt}}. Posledný z príznakov je \texttt{SHM\_NORESERVE}, ktorý definuje že sa nemá rezervovať \textit{swap} pamäť.
 
@@ -300,17 +300,17 @@ Po úspešnom pripojení funkcia \texttt{shmat} vracia adresu pripojenej pamäte
 
 Na odpojenie od zdieľanej pamäte sa používa funkcia \texttt{shmdt}, ktorá má jeden argument \texttt{shmaddr}, ktorý definuje adresu na ktorej je zdieľaná pamäť pripojená. Táto funkcia vracia 0 v prípade úspechu, inak vracia -1.
 
-Posledným systémovým volaním je \texttt{shmctl}, ktoré pracuje analogicky k systémovému volaniu \texttt{msgctl} o ktorom sa môžete viac dočítať v závere kapitoly \ref{msguse}. \texttt{shmctl} poskytuje na rozdiel od \texttt{msgctl} 2 príznaky, ktoré sú \texttt{SHM\_LOCK} a \texttt{SHM\_UNLOCK}. Tieto príznaky povoľujú alebo zabraňujú \textit{swapovaniu} zdieľanej pamäte. \texttt{SHM\_UNLOCK} definuje, že napríklad v situáciu veľkého vyťaženia pamäte môže \textit{swap} pamäte.\cite{shmctl}
+Posledným systémovým volaním je \texttt{shmctl}, ktoré pracuje analogicky k systémovému volaniu \texttt{msgctl} o ktorom sa môžete viac dočítať v závere kapitoly \ref{msguse}. \texttt{shmctl} poskytuje na rozdiel od \texttt{msgctl} 2 príznaky, ktoré sú \texttt{SHM\_LOCK} a \texttt{SHM\_UNLOCK}. Tieto príznaky povoľujú alebo zabraňujú \textit{swapovaniu} zdieľanej pamäte. Príznak \texttt{SHM\_UNLOCK} definuje, že v situáciu veľkého vyťaženia pamäte môže byť pamäť \textit{swappovaná}.\cite{shmctl}
 
 Na prácu so zdieľanou pamäťou teda zapisovanie a čítanie z pamäte používame rovnaké nástroje ako na prácu s bežným súborom a teda na zapisovanie môžeme použiť napríklad \texttt{fprintf} a na čítanie \texttt{putchar}.
 \subsection{Sokety}
-Soket predstavuje obojsmernú komunikačnú rúru, ktorá môže byť použitá na široké množstvo oblastí. Jedna z najpoužívanejších oblastí pri soketoch je komunikácia cez Internet. Avšak sokety taktiež umožňujú aj lokálnu komunikáciu medzi dvoma procesmi.\cite{beej} Nakoľko sokety zaberajú široký záber v nasledujúcich odsekoch sa pokúsime tento koncept opísať na príklade lokálnych soketov a preto, niektoré informácie nemusia byť kompletné a pre odlišné použitie sa treba inštruovať podľa\cite{socket}.
+Soket predstavuje obojsmernú komunikačnú rúru, ktorá môže byť použitá na veľké množstvo oblastí. Jedna z najpoužívanejších oblastí pri soketoch je komunikácia cez Internet. Avšak sokety taktiež umožňujú aj lokálnu komunikáciu medzi dvoma procesmi.\cite{beej} Nakoľko sokety definujú široký záber v nasledujúcich odsekoch sa pokúsime tento koncept opísať na príklade lokálnych soketov a preto, niektoré informácie nemusia byť kompletné a pre odlišné použitie sa treba inštruovať podľa\cite{socket}.
 
 Soket sa vytvára pomocou funkcie \texttt{socket} a vytvorenie lokálneho soketu vyzerá nasledovne:
 \begin{lstlisting}[
   caption={Vytvorenie soketu},
   label={lst:socket},
-  language=c
+  language=c,float,floatplacement=H
 ]
 unsigned int s;
 s = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -321,7 +321,7 @@ Takto vytvorený deskriptor je potrebné namapovať na nejakú cestu v súborovo
 \begin{lstlisting}[
   caption={\textit{Bindovanie} soketu},
   label={lst:bind},
-  language=c
+  language=c,float,floatplacement=H
 ]
 struct sockaddr_un local;
 unsigned int s;
@@ -338,7 +338,7 @@ Jednoduchý server s použitím soketov môžeme vidieť na ukážke kódu \ref{
 
 Funkcia \texttt{accept} je blokovacia funkcia, ktorá blokuje vykonávanie programu\footnote{Ak nie je definovaný príznak \texttt{SOCK\_NONBLOCK}} pokiaľ sa nevytvorí spojenie. Argumenty tejto funkcie sú \texttt{sockfd}, \texttt{addr} a \texttt{addrlen}. \texttt{sockfd} je súborový deskriptor na ktorom akceptuje pripojenie, \texttt{addr} predstavujú štruktúru do ktorej bude uložená adresa klienta, ktorý sa pripojil a \texttt{addrlen} predstavuje veľkosť tejto štruktúry. Návratová hodnota funkcie je nový súborový deskriptor, ktorý bude slúžiť na komunikáciu s pripojeným klientom. 
 
-Takto vytvorený súborový deskriptor je možné použiť na zapisovanie alebo čítanie. Na čítanie používame funkciu \texttt{recv}. Táto funkcia je taktiež blokovacia a čaká pokiaľ nepríjme správu. Prvý argument funkcie je suborový deskriptor \texttt{sockfd}, druhým argumentom je \texttt{buf}, úložisko do ktorého bude uložená správa s dĺžkou maximálne \texttt{len}, čo je tretí parameter. Posledným parametrom tejto funkcie sú príznaky, ktoré pre jednoduchosť preskočíme. Funkcia \texttt{send} má rovnakú signatúru len s rozdielom že dáta ktoré sa nachádzajú v úložisku \texttt{buf} sú odoslané do soketu.
+Takto vytvorený súborový deskriptor je možné použiť na zapisovanie alebo čítanie. Na čítanie používame funkciu \texttt{recv}. Táto funkcia je taktiež blokovacia a čaká pokiaľ nepríjme správu. Prvý argument funkcie je suborový deskriptor \texttt{sockfd}, druhým argumentom je \texttt{buf}, úložisko do ktorého bude uložená správa s dĺžkou maximálne \texttt{len}, čo je tretí parameter. Posledným parametrom tejto funkcie sú príznaky, ktoré pre jednoduchosť preskočíme. Funkcia \texttt{send} má rovnakú signatúru len s rozdielom, že dáta ktoré sa nachádzajú v úložisku \texttt{buf} sú odoslané do soketu.
 
 Na druhej strane klient, ktorý chce odosielať a prijímať dáta cez soket potrebuje vytvoriť soket a následne zavolať funkciu \texttt{connect}. Táto funkcia má rovnakú signatúru ako funkcia \texttt{bind} a zabezpečuje pripojenie súborového deskriptora k soketu, ktorý je definovaný cestou \texttt{sun\_path} v štruktúre \texttt{sockaddr}, ktorá je druhým argumentom funkcie. Takto pripojený soket je možné používať pomocou vyššie spomínaných funkcii \texttt{send} a \texttt{recv}. Vytvorenie a používanie takéhoto klienta môžeme vidieť na ukážke kódu \ref{lst:client}.\cite{beej}
 
@@ -370,11 +370,11 @@ Autorizačný server je špecifická entita pre bezpečnostné riešenie Medusa 
 \item subjekt - ide o \textit{k-objekt}, ktorý vykonáva nejakú operáciu
 \item objekt - ide o \textit{k-objekt}, nad ktorým je vykonávaná nejaká operácia
 \end{itemize}
-Na definovanie typu sa používajú makrá \textit{MEDUSA\_SUBJECT\_VARS} a \textit{MEDUSA\_OBJECT\_VARS}, ktoré rozširujú \textit{k-objekt} o interné položky \textit{Medusy}.\cite{kacer}
-\textit{K-objekt} môže obsahovať rôzne položky, ktoré z hľadiska konfigurácie rozhodovania považujeme za dôležité. Napríklad \textit{k-objekt} procesu obsahuje položky, ktoré sú odvodené z internej štruktúry jadra \textit{task\_struct} a tieto položky môžeme vidieť na definícii štruktúry \ref{lst:kobjekt}. Z definície môžeme vidieť, že tento \textit{k-objekt} môže vystupovať ako objekt ale aj ako subjekt. Takto definovanej štruktúre je možné priradiť operácie, ktoré autorizačný server môže potrebovať. Poznáme 2 typy operácii:
+Na definovanie typu sa používajú makrá \texttt{MEDUSA\_SUBJECT\_VARS} a \texttt{MEDUSA\_OBJECT\_VARS}, ktoré rozširujú \textit{k-objekt} o interné položky systému Medusa.\cite{kacer}
+\textit{K-objekt} môže obsahovať rôzne položky, ktoré z hľadiska konfigurácie rozhodovania považujeme za dôležité. Napríklad \textit{k-objekt} procesu obsahuje položky, ktoré sú odvodené z internej štruktúry jadra \textit{task\_struct} a tieto položky môžeme vidieť na definícii štruktúry \ref{lst:kobjekt}. Z definície môžeme vidieť, že tento \textit{k-objekt} môže vystupovať ako objekt, ale aj ako subjekt. Takto definovanej štruktúre je možné priradiť operácie, ktoré autorizačný server môže potrebovať. Poznáme 2 typy operácii:
 \begin{itemize}
-\item \textbf{\textit{fetch}} - operácie, pri ktorej sú prenesené dáta z jadra do \textit{k-objektu}
-\item \textbf{\textit{update}} - operácie, pri ktorej je aktualizovaná interná štruktúra jadra dátami \textit{k-objektu}
+\item \textbf{\textit{fetch}} - operácia, pri ktorej sú prenesené dáta z jadra do \textit{k-objektu}
+\item \textbf{\textit{update}} - operácia, pri ktorej je aktualizovaná interná štruktúra jadra dátami \textit{k-objektu}
 \end{itemize}
 Tieto operácie umožňujú autorizačnému serveru meniť stav systému alebo sa informovať o zmene dát v jadre.
 \subsubsection{Typy prístupov} \label{acctype}
@@ -387,15 +387,15 @@ Tieto operácie umožňujú autorizačnému serveru meniť stav systému alebo s
 \begin{lstlisting}[
   caption={Bezpečnostná štruktúra Medusy pre IPC},
   label={lst:securitys},
-  language=c
+  language=c,float,floatplacement=H
 ]
 MED_ACCTYPE(typ_typu_pristupu, "nazov_typu_pristupu", typ_subjektu, "nazov_subjektu", typ_objektu, "nazov_objektu");
 \end{lstlisting} 
-\textit{Medusa} obsahuje aj špeciálny \textit{typ prístupu}, ktorý sa nazýva \textit{udalosť}. \textit{Udalosti} narozdiel od \textit{typu prístupu} nereagujú na \textit{lsm} framework, ale \textit{udalosť} je volaná interne v rámci \textit{Medusy} a slúži na inicializáciu \textit{k-objektu} v autorizačnom servery.\cite{kacer} \textit{Udalosti} sú volané vždy pred \textit{typom prístupu} aby sa zabezpečilo, že \textit{typ prístupu} bude volaní s validným \textit{k-objektom}.
+\textit{Medusa} obsahuje aj špeciálny \textit{typ prístupu}, ktorý sa nazýva \textit{udalosť}. \textit{Udalosti} narozdiel od \textit{typu prístupu} nereagujú na \acrshort{lsm} framework, ale \textit{udalosť} je volaná interne v rámci systému Medusa a slúži na inicializáciu \textit{k-objektu} v autorizačnom servery.\cite{kacer} \textit{Udalosti} sú volané vždy pred \textit{typom prístupu} aby sa zabezpečilo, že \textit{typ prístupu} bude volaní s validným \textit{k-objektom}.
 
-\textit{Typy prístupov} majú taktiež za úlohu kontrolovať prienik virtuálnych svetov. \textbf{Virtuálne svety} predstavujú skupiny do ktorých je možné zaradovať \textit{k-objekty}. V prípade že sa dva rôzne \textit{k-objekty} nachádzajú v rôznych virtuálnych svetoch je možné automaticky operáciu zamietnuť. Priraďovanie \textit{k-objektov} do virtuálnych svetov sa uskutočňuje na základe konfigurácie. Virtuálne svety taktiež zrýchľujú rozhodovanie nakoľko v prípade rôznych virtuálnych svetov je možné bez zásahu autorizačného serveru rozhodnúť.
+\textit{Typy prístupov} majú taktiež za úlohu kontrolovať prienik virtuálnych svetov. \textbf{Virtuálne svety} predstavujú skupiny do ktorých je možné zaradovať \textit{k-objekty}. V prípade že sa dva rôzne \textit{k-objekty} nachádzajú v rôznych virtuálnych svetoch je možné automaticky operáciu zamietnuť. Priraďovanie \textit{k-objektov} do virtuálnych svetov sa uskutočňuje na základe konfigurácie. Virtuálne svety taktiež zrýchľujú rozhodovanie, nakoľko v prípade rôznych virtuálnych svetov je možné rozhodnúť bez zásahu autorizačného servera.
 
-\textit{typ prístupu} po konverziách a kontrolách virtuálnych svetov má za úlohu volať funkciu vyššej vrstvy, ktoré sa postará o komunikáciu s autorizačným serverom a rozhodnutie. Na volanie tejto funkcie sa používa makro \texttt{MED\_DECIDE}, ktoré má nasledovné parametre:
+\textit{Typ prístupu} po konverziách a kontrolách virtuálnych svetov má za úlohu volať funkciu vyššej vrstvy, ktorá sa postará o komunikáciu s autorizačným serverom a rozhodnutie. Na volanie tejto funkcie sa používa makro \texttt{MED\_DECIDE}, ktoré má nasledovné parametre:
 \begin{itemize}
 \item typ štruktúry, ktorá definuje prístupu
 \item ukazovateľ na inštanciu štruktúry, ktorá definuje prístup
@@ -406,13 +406,13 @@ Návratová hodnota tohto makra je rozhodnutie, ktoré vrátia vyššie vrstvy i
 \subsection{Architektúra}
 Systém \textit{Medusa} sa skladá z 5 vrstiev a ich funkcie sú nasledovné:
 \begin{itemize}
-\item L0 - registrácia funkcii \textit{lsm} frameworku pre skorú inicializáciu, táto vrstva zabezpečuje správnu inicializáciu systémových štruktúr pri štarte systému, tejto problematike sa venuje \cite{medusatim}
-\item L1 - registrácia všetkých funkcii \textit{lsm} frameworku, teda aj tých ktoré neboli registrované vo vrstve L1
+\item L0 - registrácia funkcii \acrshort{lsm} frameworku pre skorú inicializáciu, táto vrstva zabezpečuje správnu inicializáciu systémových štruktúr pri štarte systému, tejto problematike sa venuje \cite{medusatim}
+\item L1 - registrácia všetkých funkcii \acrshort{lsm} frameworku, teda aj tých ktoré neboli registrované vo vrstve L1
 \item L2 - \textit{typy prístupov}, \textit{udalosti} a \textit{k-objekty}
 \item L3 - registrovanie a odregistrovanie entít z vrstvy L2
 \item L4 - komunikačná vrstva, ktorá definuje aj komunikačný protokol, ktorý je možné vidieť na obrázku \ref{medusakomunikacia}
 \end{itemize}
-Komunikácia medzi systémom Medusa a autorizačným serverom Constable je zahájená pozdravom od Medusy. Následne na to sú autorizačnému serveru odoslané podporované \textit{k-objekty} a \textit{typy prístupov}/\textit{udalostí}, na základe čoho si autorizačný server zaznamená čo vie prijímať a v aké dáta budú prichádzať. Po tejto inicializácii Medusa môže začať posielať požiadavky na rozhodovanie a autorizačný server môže vykonávať udalosti \textit{update} a \textit{fetch} popísané v kapitole \ref{acctype}.
+Komunikácia medzi systémom Medusa a autorizačným serverom Constable je zahájená pozdravom od Medusy. Následne  sú autorizačnému serveru odoslané podporované \textit{k-objekty} a \textit{typy prístupov}/\textit{udalostí}, na základe čoho si autorizačný server zaznamená čo vie prijímať a aké dáta budú prichádzať. Po tejto inicializácii Medusa môže začať posielať požiadavky na rozhodovanie a autorizačný server môže vykonávať udalosti \textit{update} a \textit{fetch} popísané v kapitole \ref{acctype}.
 \begin{figure}[!htbp]
   \centering
   \includegraphics[width=12cm]{img/komunikacia.png}
@@ -421,13 +421,12 @@ Komunikácia medzi systémom Medusa a autorizačným serverom Constable je zahá
 \end{figure}
 
 \section{Implementácia}
-V predchádzajúcich kapitolách sme si popísali entity(štruktúry, funkcie), ktoré je potrebné implementovať v prípade, že chceme rozšíriť bezpečnostné riešenie o ďalší \acrshort{lsm} \textit{hook}. Prvým krokom bolo zadefinovať si \acrshort{lsm} \textit{hook}, ktoré chceme implementovať. Vybrali sme si \acrshort{ipc} mechanizmy semafor, zdieľanú pamäť a fronty správ, ktoré zdieľajú podobnú logiku a ich štruktúry v jadre majú taktiež podobnú kostru. K týmto \acrshort{ipc} mechanizmom prislúchajú \acrshort{lsm} funkcie, ktoré vidíme na ukážke kódu \ref{lst:hook}. 
+V predchádzajúcich kapitolách sme si popísali entity(štruktúry, funkcie), ktoré je potrebné implementovať v prípade, že chceme rozšíriť bezpečnostné riešenie o ďalší \acrshort{lsm} \textit{hook}. Prvým krokom bolo zadefinovať si \acrshort{lsm} \textit{hooky}, ktoré chceme implementovať. Pre \acrshort{ipc} mechanizmus rúry je už v bezpečnostnom systéme Medusa definovaná obsluha pomocou \acrshort{lsm} \textit{hookov}, ktoré sa starajú o kontrolu \textit{inodov}. Signály taktiež majú definovanú obsluhu pomocou \textit{typu prístupu} \texttt{medusa\_sendsig}. Takže sme sa rozhodli implementovať \acrshort{ipc} mechanizmy semafor, zdieľanú pamäť a fronty správ, ktoré zdieľajú podobnú logiku a ich štruktúry v jadre majú taktiež podobnú kostru. K týmto \acrshort{ipc} mechanizmom prislúchajú \acrshort{lsm} funkcie, ktoré vidíme na ukážke kódu \ref{lst:hook}. 
 \subsection{Bezpečnostná štruktúra} \label{securitys}
-Ďalším krokom bolo vytvorenie bezpečnostnej štruktúry, ktorá sa ukladá do položky \texttt{security\_s}, ktorá sa nachádza v štruktúre \texttt{kern\_ipc\_perm}, ktorú sme si popísali v kapitole \ref{kernipcperm}. Nami vytvorenú bezpečnostnú štruktúru môžeme vidieť na ukážke štruktúry \ref{lst:securitys} a  jej definícia sa nachádza v súbore \url{include/linux/medusa/l1/ipc.h}. Táto štruktúra obsahuje položku \texttt{ipc\_class}, ktorá definuje o aký typ \acrshort{ipc} mechanizmu ide. Táto položka môže nadobúdať hodnoty 0, 1 alebo 2, ktoré sú definované makrami v rovnakom súbore. Taktiež sa v tejto štruktúre definujú makrá \texttt{MEDUSA\_SUBJECT\_VARS} a \texttt{MEDUSA\_OBJECT\_VARS} ako pri \texttt{k-objekte}, ktoré sme si popísali v kapitole \ref{kobjekt}. 
+Ďalším krokom bolo vytvorenie bezpečnostnej štruktúry, ktorá sa ukladá do položky \texttt{security\_s}, ktorá sa nachádza v štruktúre \texttt{kern\_ipc\_perm}, ktorú sme si popísali v kapitole \ref{kernipcperm}. Nami vytvorenú bezpečnostnú štruktúru môžeme vidieť na ukážke štruktúry \ref{lst:securitys} a  jej definícia sa nachádza v súbore \url{include/linux/medusa/l1/ipc.h}. Táto štruktúra obsahuje položku \texttt{ipc\_class}, ktorá definuje o aký typ \acrshort{ipc} mechanizmu ide. Táto položka môže nadobúdať hodnoty 0, 1, 2 alebo 3, ktoré sú definované makrami v rovnakom súbore. Taktiež sa v tejto štruktúre definujú makrá \texttt{MEDUSA\_SUBJECT\_VARS} a \texttt{MEDUSA\_OBJECT\_VARS} ako pri \texttt{k-objekte}, ktoré sme si popísali v kapitole \ref{kobjekt}. 
 \begin{lstlisting}[
   caption={Bezpečnostná štruktúra Medusy pre IPC},
-  label={lst:securitys},
-  language=c
+  label={lst:securitys}
 ]
 #define MED_IPC_SEM 0
 #define MED_IPC_MSG 1
@@ -441,7 +440,7 @@ struct medusa_l1_ipc_s {
 };
 \end{lstlisting} 
 
-Takto zadefinovanú bezpečnostnú štruktúru je potrebné alokovať načo nám slúžia \acrshort{lsm} \textit{hooky} \texttt{*\_alloc\_security} a na uvoľnenie pamäte \texttt{\_free\_security} tieto \textit{hooky} môžeme vidieť v hornej časti výpisu \ref{lst:hook}. Aj keď tieto funkcie majú rôzne parametre, je možné z týchto parametrov získať položku \texttt{kern\_ipc\_perm}, ktorú využívame v pomocnej funkcií \texttt{medusa\_l1\_ipc\_alloc\_security}, ktorej prvý parameter je práve táto štruktúra a druhým parametrom je typ \acrshort{ipc} mechanizmu. Príklad použitie pomocnej funkcie môžete vidieť na ukážke kódu \ref{lst:allocusage}. Avšak táto pomocná funkcia nepokrýva všetky alokácie, nakoľko \acrshort{lsm} framework obsahuje aj funkciu \texttt{msg\_msg\_alloc\_security}, ktorá má argument typu \texttt{msg\_msg}, ktorý neobsahuje štruktúru \texttt{kern\_ipc\_perm} ale bezpečnostná štruktúra sa nachádza priamo v tejto štruktúre teda \texttt{msg\_msg->security}. Na uvoľnenie pamäte je taktiež vytvorená spoločná funkcia, ktorú môžete vidieť na ukážke kódu \ref{lst:free}. Táto funkcia obsluhuje všetky \acrshort{lsm} \textit{hooky} s výnimkou \texttt{medusa\_l1\_msg\_msg\_free\_security}, ktorá má rovnaké obmedzenia, ktoré sme si spomenuli vyššie, ako funkcia na alokovanie.
+Takto zadefinovanú bezpečnostnú štruktúru je potrebné alokovať načo nám slúžia \acrshort{lsm} \textit{hooky} \texttt{*\_alloc\_security} a na uvoľnenie pamäte \texttt{*\_free\_security} tieto \textit{hooky} môžeme vidieť v hornej časti výpisu \ref{lst:hook}. Aj keď tieto funkcie majú rôzne parametre, je možné z týchto parametrov získať položku \texttt{kern\_ipc\_perm}, ktorú využívame v pomocnej funkcií \texttt{medusa\_l1\_ipc\_alloc\_security}, ktorej prvý parameter je práve táto štruktúra a druhým parametrom je typ \acrshort{ipc} mechanizmu. Príklad použitie pomocnej funkcie môžete vidieť na ukážke kódu \ref{lst:allocusage}. Avšak táto pomocná funkcia nepokrýva všetky alokácie, nakoľko \acrshort{lsm} framework obsahuje aj funkciu \texttt{msg\_msg\_alloc\_security}, ktorá má argument typu \texttt{msg\_msg}, ktorý neobsahuje štruktúru \texttt{kern\_ipc\_perm} ale bezpečnostná štruktúra sa nachádza priamo v tejto štruktúre, teda \texttt{msg\_msg->security}. Na uvoľnenie pamäte je taktiež vytvorená spoločná funkcia, ktorú môžete vidieť na ukážke kódu \ref{lst:free}. Táto funkcia obsluhuje všetky \acrshort{lsm} \textit{hooky} s výnimkou \texttt{medusa\_l1\_msg\_msg\_free\_security}, ktorá má rovnaké obmedzenia, ktoré sme si spomenuli vyššie, ako funkcia na alokovanie.
 \begin{lstlisting}[
   caption={Príklad použitia pomocnej funkcie na alokovanie bezpečnostnej štruktúry},
   label={lst:allocusage},
@@ -454,7 +453,7 @@ static int medusa_l1_msg_queue_alloc_security(struct msg_queue *msq)
 \end{lstlisting} 
 
 \subsection{Vytvorenie \textit{k-objektu}} \label{kobjectimpl}
-Pri definovaný \textit{k-objektu} sme narazili na niekoľko obmedzení, ktoré sa vynorili až v neskorších fázach implementácie a preto sa aj definícia \textit{k-objektu} menila v priebehu vývoja. Prvý priamočiary návrh bolo vytvoriť 3 rôzne \textit{k-objekty} pre \acrshort{sem}, \acrshort{shm} a \acrshort{msg}. Toto riešenie však prinášalo so sebou veľké množstvo kódu nakoľko tieto 3 mechanizmy majú dve operácie \texttt{get} a \texttt{ctl}, ktoré pri svojich volaniach vyvolávaj \acrshort{lsm} \textit{hooky}, ktoré majú signatúry, ktoré môžeme vidieť na ukážke kódu \ref{lst:associate}.
+Pri definovaný \textit{k-objektu} sme narazili na niekoľko obmedzení, ktoré sa vynorili až v neskorších fázach implementácie a preto sa aj definícia \textit{k-objektu} menila v priebehu vývoja. Prvý priamočiary návrh bol vytvoriť 3 rôzne \textit{k-objekty} pre \acrshort{sem}, \acrshort{shm} a \acrshort{msg}. Toto riešenie však prinášalo so sebou veľké množstvo kódu nakoľko tieto 3 mechanizmy majú dve operácie \texttt{get} a \texttt{ctl}, ktoré pri svojich volaniach vyvolávaj \acrshort{lsm} \textit{hooky}, ktoré majú signatúry, ktoré môžeme vidieť na ukážke kódu \ref{lst:associate}.
 \begin{lstlisting}[
   caption={\acrshort{lsm} \textit{hooky} pre operácie \texttt{get} a \texttt{ctl}},
   label={lst:associate},
@@ -469,8 +468,7 @@ Keby sme pre každý mechanizmus vytvorili samostatný \textit{k-objekt} a chcel
 Pre tento fakt sme sa rozhodli vytvoriť 4. \textit{k-objekt}, ktorý predstavuje jednotný \textit{k-objekt}, ktorý sa bude využívať pri \textit{typoch prístupu} a teda pre vyššie spomínané operácie budeme definovať len 2 \textit{typy prístupov}. Všeobecný \textit{k-objekt} môžeme vidieť na ukážke kódu \ref{lst:kobjectcommon}. 
 \begin{lstlisting}[
   caption={Všeobecný \textit{k-objekt}},
-  label={lst:kobjectcommon},
-  language=c
+  label={lst:kobjectcommon}
 ]
 struct ipc_kobject {	
 	unsigned char data[max_simple(max_simple(sizeof(struct ipc_sem_kobject), sizeof(struct ipc_shm_kobject)), sizeof(struct ipc_msg_kobject))];	
@@ -485,13 +483,12 @@ Konkrétne \textit{k-objekty}(pre \acrshort{sem}, \acrshort{shm} a \acrshort{msg
 \item \texttt{ipc\_perm} - predstavuje internú štruktúru Medusy, \texttt{medusa\_ipc\_perm}, ktorá je definovaná v \url{include/linux/medusa/l1/ipc.h}. Obsahuje jednoduché položky štruktúry \texttt{kern\_ipc\_perm}, ktorá bola popísaná v kapitol \ref{kernipcperm} a v štruktúre je definovaná pomocou makra \texttt{MEDUSA\_IPC\_VARS}.
 \item \texttt{MEDUSA\_OBJECT\_VARS} - makro, ktoré sme si bližšie popísali v kapitole \ref{kobjekt}
 \end{itemize}
-Konkrétne \textit{k-objekty} môžu obsahovať aj špecifické údaje pre konkrétny mechanizmus, napríklad \textit{k-objekt} \texttt{ipc\_sem\_kobject} obsahuje položku \texttt{sem\_nsems}, v ktoré je uchovaný počet počítadiel v skupine semaforu.
+Konkrétne \textit{k-objekty} môžu obsahovať aj špecifické údaje pre konkrétny mechanizmus, napríklad \textit{k-objekt} \texttt{ipc\_sem\_kobject} obsahuje položku \texttt{sem\_nsems}, v ktorej je uchovaný počet počítadiel v skupine semaforu.
 \subsubsection{Konverzné funkcie} \label{converse}
 Takto vytvoreným \textit{k-objektom} je potrebné definovať konverzné funkcie medzi štruktúrou jadra, v našom prípade ide o štruktúry \texttt{msg\_queue}, \texttt{sem\_array} a \texttt{shmid\_kernel} na štruktúry Medusy, ktoré sú \texttt{ipc\_msg\_kobject}, \texttt{ipc\_sem\_kobject} a \texttt{ipc\_shm\_kobject}. Avšak medzi \acrshort{lsm} funkciami sa nachádza aj \texttt{ipc\_permission}, ktorej signatúru môžeme vidieť na ukážke kódu \ref{lst:ipcpermission}.
 \begin{lstlisting}[
   caption={Signatúra obslužnej funkcie pre \acrshort{lsm} \textit{hook} \texttt{ipc\_permission}},
-  label={lst:ipcpermission},
-  language=c
+  label={lst:ipcpermission}
 ]
 static int medusa_l1_ipc_permission(struct kern_ipc_perm *ipcp, short flag)
 \end{lstlisting}
@@ -505,7 +502,7 @@ Pričom \texttt{[typ]} môže byť \texttt{sem}, \texttt{shm} alebo \texttt{msg}
 \begin{lstlisting}[
   caption={Konverzná funkcia zo štruktúry jadra na štruktúru Medusy pre \acrshort{sem}},
   label={lst:ipcsemkern2kobj},
-  language=c,
+  language=c,float,floatplacement=H,
   style=nm
 ]
 static struct ipc_sem_kobject storage;
@@ -533,19 +530,23 @@ void * ipc_sem_kern2kobj(struct kern_ipc_perm * ipcp)
 }
 \end{lstlisting}
 
-Na začiatku si deklarujeme pomocné premenné, ktoré následne inicializujeme. Prvou pomocnou premennou je bezpečnostná štruktúra, ktorú sme si popísali v kapitole \ref{securitys} a druhou premennou je štruktúra, ktorá je hlavnou štruktúrou pre konkrétny \acrshort{ipc} mechanizmus. Dôležitým makrom, ktoré sa tu používa je makro \texttt{container\_of}. Toto makro na základe ukazovateľa \texttt{ptr} na nejakú položku \texttt{member} dokáže vrátiť adresu na kontajner, ktorý má typ \texttt{type}. Princíp fungovania môžme vidieť aj na obrázku \ref{containerof}.
-\begin{figure}[!htbp]
+Na začiatku si deklarujeme pomocné premenné, ktoré následne inicializujeme. Prvou pomocnou premennou je bezpečnostná štruktúra, ktorú sme si popísali v kapitole \ref{securitys} a druhou premennou je štruktúra, ktorá je hlavnou štruktúrou pre konkrétny \acrshort{ipc} mechanizmus. 
+
+Dôležitým makrom, ktoré sa tu používa je makro \texttt{container\_of}. Toto makro na základe ukazovateľa \texttt{ptr} na nejakú položku \texttt{member} dokáže vrátiť adresu na kontajner, ktorý má typ \texttt{type}. Princíp fungovania môžme vidieť aj na obrázku \ref{containerof}.
+\begin{figure}[!h]
   \centering
-  \includegraphics[width=5cm]{img/container_of.png}
+  \includegraphics[width=8cm]{img/container_of.png}
   \caption{Princíp fungovania \textit{container\_of} makra \cite{containerof}}
   \label{containerof}
 \end{figure}
-Pomocou tohto makra dokážeme získať hlavnú štruktúru \acrshort{ipc} mechanizmu len za pomoci štruktúry \texttt{kern\_ipc\_perm}. Ďalším krokom je vynulovanie pamäte premennej \texttt{storage}. Táto premenná slúži na uloženie \textit{k-objektu} v pamäti, pokým sa nepošle autorizačnému serveru. Na ďalšom riadku sa nachádza kontrola bezpečnostnej štruktúry, ktorá by nemala byť \texttt{NULL}, ak však takýto prípad nastane tak funkcia vráti \texttt{NULL} a vyššie funkcie ktoré túto konverziu používajú musia túto možnosť ďalej ošetriť. Na riadku 16 a 17 sa do \textit{k-objektu} prenesú údaje o type mechanizmu a špecifická vlastnosť \acrshort{sem}, ktorou je počet semaforov. Na riadkoch 19 a 20 sú použité pomocné makrá, ktoré sme si vytvorili len pre potreby \acrshort{ipc} a slúžia na prekopírovanie položiek štruktúry \texttt{kern\_ipc\_perm}, ktoré sa v \textit{k-objekte} nachádzajú v položke \texttt{ipc\_perm}, ktorú sme si popísali vyššie v tejto kapitole. Implementácia týchto dvoch makier sa nachádza v hlavičkovom súbore \url{include/linux/medusa/l1/ipc.h}. Makro \texttt{COPY\_READ\_IPC\_VARS} kopíruje položky, ktoré je možné len čítať a makro \texttt{COPY\_WRITE\_IPC\_VARS} kopíruje položky, ktoré je možné čítať aj prepisovať v štruktúre jadra. Posledným makrom, ktoré sa pri konverzii používa je makro \texttt{COPY\_MEDUSA\_OBJECT\_VARS}, ktoré kopíruje interné položky definované pre \textit{objekt} z bezpečnostnej štruktúry do \textit{k-objektu}. Návratová hodnota tejto funkcie je \texttt{void} ukazovateľ na úložisko kde máme nový \textit{k-objekt}.
+Pomocou tohto makra dokážeme získať hlavnú štruktúru \acrshort{ipc} mechanizmu len za pomoci štruktúry \texttt{kern\_ipc\_perm}. 
+
+Ďalším krokom je vynulovanie pamäte premennej \texttt{storage}. Táto premenná slúži na uloženie \textit{k-objektu} v pamäti, pokým sa nepošle autorizačnému serveru. Na ďalšom riadku sa nachádza kontrola bezpečnostnej štruktúry, ktorá by nemala byť \texttt{NULL}, ak však takýto prípad nastane tak funkcia vráti \texttt{NULL} a vyššie funkcie ktoré túto konverziu používajú musia túto možnosť ďalej ošetriť. Na riadku 16 a 17 sa do \textit{k-objektu} prenesú údaje o type mechanizmu a špecifická vlastnosť \acrshort{sem}, ktorou je počet semaforov. Na riadkoch 19 a 20 sú použité pomocné makrá, ktoré sme si vytvorili len pre potreby \acrshort{ipc} a slúžia na prekopírovanie položiek štruktúry \texttt{kern\_ipc\_perm}, ktoré sa v \textit{k-objekte} nachádzajú v položke \texttt{ipc\_perm}, ktorú sme si popísali vyššie v tejto kapitole. Implementácia týchto dvoch makier sa nachádza v hlavičkovom súbore \url{include/linux/medusa/l1/ipc.h}. Makro \texttt{COPY\_READ\_IPC\_VARS} kopíruje položky, ktoré je možné len čítať a makro \texttt{COPY\_WRITE\_IPC\_VARS} kopíruje položky, ktoré je možné čítať aj prepisovať v štruktúre jadra. Posledným makrom, ktoré sa pri konverzii používa je makro \texttt{COPY\_MEDUSA\_OBJECT\_VARS}, ktoré kopíruje interné položky definované pre \textit{objekt} z bezpečnostnej štruktúry do \textit{k-objektu}. Návratová hodnota tejto funkcie je \texttt{void} ukazovateľ na úložisko kde máme nový \textit{k-objekt}.
 
 \begin{lstlisting}[
   caption={Konverzná funkcia zo štruktúry Medusy na štruktúru jadra pre \acrshort{sem}},
   label={lst:ipckobj2kern},
-  language=c
+  language=c,float,floatplacement=H
 ]
 medusa_answer_t ipc_sem_kobj2kern(struct medusa_kobject_s * ipck, struct kern_ipc_perm * ipcp)
 {
@@ -568,7 +569,7 @@ Tieto konverzné funkcie pre \acrshort{sem}, \acrshort{shm} a \acrshort{msg} nie
 \begin{lstlisting}[
   caption={Konverzná funkcia zo štruktúry Medusy na štruktúru jadra},
   label={lst:ipckern2kobj},
-  language=c
+  language=c,float,floatplacement=H
 ]
 int ipc_kern2kobj(struct ipc_kobject * ipck, struct kern_ipc_perm * ipcp)
 {
@@ -597,7 +598,7 @@ Pre plnohodnotnú funkcionalitu bolo potrebné definovať operácie \textit{fetc
 \begin{lstlisting}[
   caption={Operácie \texttt{fetch} pre \textit{k-objekt} semaforu},
   label={lst:semfetch},
-  language=c
+  language=c,float,floatplacement=H
 ]
 static struct medusa_kobject_s * ipc_sem_fetch(struct medusa_kobject_s * kobj)
 {
@@ -612,13 +613,13 @@ Na ukážke kódu \ref{lst:semfetch} vidíme operáciu \texttt{fetch} \textit{k-
 \begin{itemize}
 \item získanie štruktúry \texttt{ipc\_ids} podľa typu \acrshort{ipc} mechanizmu
 \item získanie štruktúry \texttt{kern\_ipc\_perm} na základe identifikátora \acrshort{ipc} mechanizmu
-\item konverzia štruktúr pomocou funkcii, ktoré sme si popísali v kapitole \ref{converse}
+\item konverzia štruktúr pomocou funkcií, ktoré sme si popísali v kapitole \ref{converse}
 \item vrátenie nového \textit{k-objektu}
 \end{itemize}
 \begin{lstlisting}[
   caption={Operácie \texttt{update} pre \textit{k-objekt} semaforu},
   label={lst:semupdate},
-  language=c
+  language=c,float,floatplacement=H
 ]
 static medusa_answer_t ipc_sem_update(struct medusa_kobject_s * kobj)
 {
@@ -647,7 +648,7 @@ Operácia \textit{update} funguje na rovnakom princípe ale odlišuje sa hlavne 
 \item iterovanie cez súbory na ceste \url{/proc/sysvipc/}
 \end{itemize}
 \end{itemize}
-Jadro systému Linux taktiež obsahuje aj operácie na zvýšenie(\texttt{ipc\_rcu\_getref}) a na zníženie(\texttt{ipc\_put\_getref}) počítadla referencii, ktoré zabraňuje tomu aby bol \acrshort{ipc} objekt odstránený a zároveň používaný nejakým procesom. Na základe týchto poznatkov sme v operácii \textit{fetch} použili len \acrshort{rcu} uzamykací mechanizmus keďže vykonávame len čítacie operácie a pri operácií \textit{update} používame systém \acrshort{rcu} spoločne s funkciou \texttt{ipc\_lock\_object} nakoľko vykonávame aj zapisovanie do štruktúr jadra. Aby sme predišli nechcenému odstráneniu objektu zo systému, tak po získaní štruktúry taktiež zvyšujeme aj referenciu na tento objekt. Keďže pri operácii \textit{update} nevytvárame, nemažeme ani neprechádzame objekty \acrshort{ipc}, nebolo potrebné použiť zámok \texttt{ids->rwsem}.
+Jadro systému Linux taktiež obsahuje aj operácie na zvýšenie(\texttt{ipc\_rcu\_getref}) a na zníženie(\texttt{ipc\_put\_getref}) počítadla referencii, ktoré zabraňuje tomu aby bol \acrshort{ipc} objekt odstránený a zároveň používaný nejakým procesom. Na základe týchto poznatkov sme v operácii \textit{fetch} použili len \acrshort{rcu} uzamykací mechanizmus, keďže vykonávame len čítacie operácie a pri operácií \textit{update} používame systém \acrshort{rcu} spoločne s funkciou \texttt{ipc\_lock\_object} nakoľko vykonávame aj zapisovanie do štruktúr jadra. Aby sme predišli nechcenému odstráneniu objektu zo systému, tak po získaní štruktúry taktiež zvyšujeme aj referenciu na tento objekt. Keďže pri operácii \textit{update} nevytvárame, nemažeme ani neprechádzame objekty \acrshort{ipc}, nebolo potrebné použiť zámok \texttt{ids->rwsem}.
 \subsection{Typy prístupov}
 Po tom ako sme si vytvorili potrebné \textit{k-objekty}, bolo potrebné zadefinovať \textit{typy prístupov}. Definícia \textit{typu prístupu} priamo nadväzuje na \acrshort{lsm} \textit{hook} avšak snažili sme sa \acrshort{lsm} \textit{hooky}, ktoré sú podobné zlúčiť pod jeden \textit{typ prístupu}. Výsledkom sú nasledovné \textit{typy prístupov}:
 \begin{itemize}
@@ -663,13 +664,13 @@ Každý z týchto \textit{typov prístupu} má definovaný \textit{object}, ktor
 
 Aby bolo možné kompletne implementovať \textit{typy prístupov} bolo nevyhnutné vytvoriť \textit{udalosť}, ktorá bude kontrolovať a validovať \textit{k-objekty}. Preto sme vytvorili \textit{udalosť} \texttt{getipc}, ktorá má za úlohu inicializovať interné položky a zaregistrovať objekt u autorizačného serveru. Takto zaregistrovaný objekt považujeme za validný a \textit{typ prístupu} môže ďalej vykonávať rozhodovanie. \textit{Typ prístupu} vyvoláva túto \textit{udalosť} pomocou volania funkcie \texttt{medusa\_ipc\_validate}, ktorej návratová hodnota je typu \texttt{medusa\_answer\_t} a v prípade že nadobúda hodnotu \texttt{MED\_OK} tak rozhodovanie pokračuje v opačnom prípade rozhodovanie nenastane a systému je vrátená hodnota, ktorá povoľuje systémové volanie. Ide o vlastnosť Medusy, ktorá v prípade chyby väčšinou systémové volanie povolí.
 
-Pri implementácii \textit{typov prístupu} sme narazili na problém pri systémovom volaní typu \texttt{ctl}, ktoré sme si popísali aj v kapitole \ref{msguse}. Toto systémové volanie môže byť použité s rôznymi prepínačmi a pri použití prepínača \texttt{IPC\_INFO} alebo \texttt{[type]\_INFO}, kde \textit{type} predstavuje konkrétny \acrshort{ipc}, nastáva situácia kedy do funkcie nevstupuje žiadny \acrshort{ipc} objekt. Preto bolo nevyhnutné tento prípad pri \textit{type prístupu} riešiť a v prípade že sa jedná o jeden zo spomínaných prepínačov tak sa pri rozhodovaní ako objekt posiela \texttt{NULL} a položka \texttt{ipc\_class} v \textit{type prístupu} nadobúda hodnotu \texttt{MED\_IPC\_UNDEFINED}. Toto je potrebné zohľadniť pri konfigurácií aby sa predišlo chybám spôsobením hodnotou \texttt{NULL}. Môže vystávať otázka či je nevyhnutné rozhodovať o systémovom volaní \texttt{ctl} pri takomto použití, teda keď používateľ zisťuje limity \acrshort{ipc} mechanizmu. Avšak z pohľadu útočníka aj toto systémové volanie môže predstavovať vhodný bod na získanie cenných informácií o systéme, ktorý sa snaží skompromitovať a preto je nevyhnutné aj toto volanie kontrolovať.
+Pri implementácii \textit{typov prístupu} sme narazili na problém pri systémovom volaní typu \texttt{ctl}, ktoré sme si popísali aj v kapitole \ref{msguse}. Toto systémové volanie môže byť použité s rôznymi prepínačmi a pri použití prepínača \texttt{IPC\_INFO} alebo \texttt{[type]\_INFO}, kde \textit{type} predstavuje konkrétny \acrshort{ipc}, nastáva situácia kedy do funkcie nevstupuje žiadny \acrshort{ipc} objekt. Preto bolo nevyhnutné tento prípad pri \textit{type prístupu} riešiť a v prípade, že sa jedná o jeden zo spomínaných prepínačov tak sa pri rozhodovaní ako objekt posiela \texttt{NULL} a položka \texttt{ipc\_class} v \textit{type prístupu} nadobúda hodnotu \texttt{MED\_IPC\_UNDEFINED}. Toto je potrebné zohľadniť pri konfigurácií aby sa predišlo chybám spôsobením hodnotou \texttt{NULL}. Môže vystávať otázka či je nevyhnutné rozhodovať o systémovom volaní \texttt{ctl} pri takomto použití, teda keď používateľ zisťuje limity \acrshort{ipc} mechanizmu. Avšak z pohľadu útočníka aj toto systémové volanie môže predstavovať vhodný bod na získanie cenných informácií o systéme, ktorý sa snaží skompromitovať a preto je nevyhnutné aj toto volanie kontrolovať.
 
 Takto definované \textit{typy prístupov} sme následne využili vo vrstve L1, kde sme v jednotlivých \acrshort{lsm} \textit{hookoch} zavolali príslušné funkcie. Príklad použitia \textit{typu prístupu} môžeme vidieť na ukážke kódu \ref{lst:l1acctype}.
 \begin{lstlisting}[
   caption={Volanie funkcie \textit{typu prístupu} z vrstvy L1},
   label={lst:l1acctype},
-  language=c
+  language=c,float,floatplacement=H
 ]
 static int medusa_l1_msg_queue_associate(struct msg_queue *msq, int msqflg)
 {
