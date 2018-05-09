@@ -679,7 +679,7 @@ static int medusa_l1_msg_queue_associate(struct msg_queue *msq, int msqflg)
 	return 0;
 }
 \end{lstlisting}
-
+\pagebreak
 \subsection{Konfigurácia autorizačného servera}
 Po doplnení Medusy o ďalšie \textit{typy prístupov} bolo potrebné vytvoriť aj konfiguráciu na strane autorizačného servera, s ktorou by sme mohli vykonať testy a odskúšať funkčnosť. Pri našom testovaní sme použili autorizačný server \textit{mYstable} a jeho konfiguráciu v jazyku Python, ktorú môžete vidieť na ukážke kódu \ref{lst:config}. Tento konfiguračný súbor obsahuje pomocnú funkciu \texttt{get\_concrete\_ipc}, ktorej úlohou je na strane autorizačného servera, zmeniť všeobecný \textit{k-object} na konkrétny na základe typu mechanizmu, ktorý sa nachádza v každom \textit{type prístupu} v položke \texttt{ipc\_class}. Ďalej sa v tejto konfigurácii nachádza obsluha pre \textit{udalosť} \texttt{ipc}, ktorá pre jednoduchosť akceptuje všetky požiadavky. Poslednou časťou je samotná obsluha konkrétneho \textit{typu prístupu} a na tejto ukážke je zobrazená obsluha pre \textit{typ prístupu} \texttt{ipc\_ctl}, ktorý sme si taktiež popísali v predchádzajúcej kapitole. Tento \textit{typ prístupu} musí ošetrovať aj prípad, kedy typ mechanizmu je 3(\texttt{MED\_IPC\_UNDEFINED}) a v tomto prípade vieme, že ide o špeciálny prípad s príznakom \texttt{IPC\_INFO}, ktorý sme spomínali taktiež v predchádzajúcej kapitole. 
 
